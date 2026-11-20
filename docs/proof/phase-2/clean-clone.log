@@ -1,0 +1,46 @@
+=== Verification Report (phase=2) ===
+Timestamp (UTC): 2026-11-20T09:38:49.532275+00:00
+Git HEAD: a1993e7
+Git working tree: clean
+Git core.hooksPath: unset
+Python: 3.13.14
+Phase spec check: SPEC_PRESENT
+Secret scan: PASS
+Clean tree check: PASS
+
+--- Unit Tests (python3 -m unittest discover -s tests -v) ---
+test_env_ignored_and_hook_executable_in_index (test_harness_smoke.TestHarnessSmoke.test_env_ignored_and_hook_executable_in_index) ... ok
+test_hello_headless_and_local_http_serve (test_harness_smoke.TestHarnessSmoke.test_hello_headless_and_local_http_serve) ... ok
+test_hook_blocks_forbidden_and_staged_secret_and_allows_clean_binary (test_harness_smoke.TestHarnessSmoke.test_hook_blocks_forbidden_and_staged_secret_and_allows_clean_binary) ... ok
+test_phase_validation_hermetic_and_strict_review_guards (test_harness_smoke.TestHarnessSmoke.test_phase_validation_hermetic_and_strict_review_guards) ... ok
+test_qwen_review_get_git_diff_fail_closed_on_empty_invalid_and_oversized (test_harness_smoke.TestHarnessSmoke.test_qwen_review_get_git_diff_fail_closed_on_empty_invalid_and_oversized) ... ok
+test_secret_scanner_boundaries_and_filenames (test_harness_smoke.TestHarnessSmoke.test_secret_scanner_boundaries_and_filenames) ... ok
+test_verify_blocks_non_ascii_secret_oversized_binary_dirty_red_and_skipped (test_harness_smoke.TestHarnessSmoke.test_verify_blocks_non_ascii_secret_oversized_binary_dirty_red_and_skipped) ... verify.py: PASS (phase=0, commit=no-commit, tree=dirty (7 uncommitted path(s)))
+ok
+test_3d_http_and_websocket_server_drives_live_simulation (test_phase1_sim.TestPhase1Simulation.test_3d_http_and_websocket_server_drives_live_simulation) ... ok
+test_contract_json_matches_phase1_tuning (test_phase1_sim.TestPhase1Simulation.test_contract_json_matches_phase1_tuning) ... ok
+test_fall_off_island_deducts_flame_and_respawns_or_loses (test_phase1_sim.TestPhase1Simulation.test_fall_off_island_deducts_flame_and_respawns_or_loses) ... ok
+test_headless_cli_determinism_jsonl_contract_and_exit_code_2 (test_phase1_sim.TestPhase1Simulation.test_headless_cli_determinism_jsonl_contract_and_exit_code_2) ... ok
+test_headless_full_night_performance_budget (test_phase1_sim.TestPhase1Simulation.test_headless_full_night_performance_budget) ... ok
+test_interact_held_does_not_retrigger_without_false_transition (test_phase1_sim.TestPhase1Simulation.test_interact_held_does_not_retrigger_without_false_transition) ... ok
+test_mote_pickup_capacity_and_lantern_deposit_rising_edge_win (test_phase1_sim.TestPhase1Simulation.test_mote_pickup_capacity_and_lantern_deposit_rising_edge_win) ... ok
+test_movement_cam_yaw_and_diagonal_normalization (test_phase1_sim.TestPhase1Simulation.test_movement_cam_yaw_and_diagonal_normalization) ... ok
+test_pulse_stuns_pushes_and_respects_cooldown_and_cost (test_phase1_sim.TestPhase1Simulation.test_pulse_stuns_pushes_and_respects_cooldown_and_cost) ... ok
+test_shade_hit_drops_motes_grants_invuln_and_safe_radius_blocks_shades (test_phase1_sim.TestPhase1Simulation.test_shade_hit_drops_motes_grants_invuln_and_safe_radius_blocks_shades) ... ok
+test_sim_module_is_decoupled_from_io_and_rendering (test_phase1_sim.TestPhase1Simulation.test_sim_module_is_decoupled_from_io_and_rendering) ... ok
+test_vendor_threejs_sha256_and_contract_edge_cases (test_phase1_sim.TestPhase1Simulation.test_vendor_threejs_sha256_and_contract_edge_cases) ... ok
+test_charm_boosts_speed_removes_dash_cooldown_and_respawns (test_phase2_features.TestPhase2Features.test_charm_boosts_speed_removes_dash_cooldown_and_respawns) ... ok
+test_contract_v1_1_snapshot_and_tuning_fields (test_phase2_features.TestPhase2Features.test_contract_v1_1_snapshot_and_tuning_fields) ... ok
+test_dash_air_elevation_hold_and_cooldown (test_phase2_features.TestPhase2Features.test_dash_air_elevation_hold_and_cooldown) ... ok
+test_drifter_steal_and_pulse_drop (test_phase2_features.TestPhase2Features.test_drifter_steal_and_pulse_drop) ... ok
+test_night2_jump_pad_launches_across_to_island_b (test_phase2_features.TestPhase2Features.test_night2_jump_pad_launches_across_to_island_b) ... ok
+test_night3_full_21600_ticks_performance_and_determinism (test_phase2_features.TestPhase2Features.test_night3_full_21600_ticks_performance_and_determinism) ... ok
+test_night3_ramps_jump_pad_bell_tower_and_wind (test_phase2_features.TestPhase2Features.test_night3_ramps_jump_pad_bell_tower_and_wind) ... ok
+test_pause_freezes_sim_tick_and_time_then_resumes (test_phase2_features.TestPhase2Features.test_pause_freezes_sim_tick_and_time_then_resumes) ... ok
+
+----------------------------------------------------------------------
+Ran 27 tests in 9.947s
+
+OK
+
+OVERALL: PASS
