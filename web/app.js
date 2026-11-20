@@ -17,9 +17,21 @@
   const optVolume = document.getElementById("opt-volume");
   const optSens = document.getElementById("opt-sens");
   const optColorblind = document.getElementById("opt-colorblind");
+  const optReducedMotion = document.getElementById("opt-reduced-motion");
+  const optLargeText = document.getElementById("opt-large-text");
+  const btnResetKeys = document.getElementById("btn-reset-keys");
+  const rebindList = document.getElementById("rebind-list");
+  const rebindError = document.getElementById("rebind-error");
+  const leaderboardPanel = document.getElementById("leaderboard-panel");
+  const lbBody = document.getElementById("lb-body");
+  const saveScorePanel = document.getElementById("save-score-panel");
+  const lbName = document.getElementById("lb-name");
+  const btnSaveScore = document.getElementById("btn-save-score");
+  const lbSaveMsg = document.getElementById("lb-save-msg");
 
   const btnPrimary = document.getElementById("btn-primary");
   const btnSecondary = document.getElementById("btn-secondary");
+  const btnLeaderboard = document.getElementById("btn-leaderboard");
   const btnSettings = document.getElementById("btn-settings");
   const btnMenu = document.getElementById("btn-menu");
 
@@ -37,19 +49,71 @@
   const elDashCd = document.getElementById("dash-cd");
   const elPulseCd = document.getElementById("pulse-cd");
   const elPrompt = document.getElementById("interact-prompt");
-  const elPromptProg = document.getElementById("prompt-progress");
   const elArrow = document.getElementById("offscreen-arrow");
+  const elShadeArrow = document.getElementById("shade-arrow");
+  const elSubtitle = document.getElementById("subtitle-bar");
 
-  // Persistent settings (Ticket-02 Part 3 #5 + Ticket-03 Colorblind mode)
+  // Persistent settings & Accessibility (Ticket-02, Ticket-03, Ticket-04)
+  const DEFAULT_KEYS = {
+    up: "KeyW", down: "KeyS", left: "KeyA", right: "KeyD",
+    jump: "Space", dash: "ShiftLeft", interact: "KeyE", pulse: "KeyQ", pause: "Escape",
+  };
+  const ACTION_LABELS = {
+    up: "Lên", down: "Xuống", left: "Trái", right: "Phải",
+    jump: "Nhảy", dash: "Lướt", interact: "Tương tác", pulse: "Tỏa Sáng", pause: "Tạm dừng",
+  };
+  let keybinds = { ...DEFAULT_KEYS };
+  try {
+    const saved = JSON.parse(localStorage.getItem("ddl_keybinds") || "null");
+    if (saved && typeof saved === "object") keybinds = { ...DEFAULT_KEYS, ...saved };
+  } catch (_) {}
+  let listeningAction = null;
+
+  function renderRebindList() {
+    rebindList.innerHTML = "";
+    for (const [act, label] of Object.entries(ACTION_LABELS)) {
+      const row = document.createElement("div");
+      row.className = "rebind-row";
+      const sp = document.createElement("span");
+      sp.textContent = label;
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "secondary small-btn";
+      btn.textContent = listeningAction === act ? "Nhấn phím..." : keybinds[act];
+      btn.addEventListener("click", () => {
+        listeningAction = act;
+        rebindError.classList.add("hidden");
+        renderRebindList();
+      });
+      row.appendChild(sp);
+      row.appendChild(btn);
+      rebindList.appendChild(row);
+    }
+  }
+  renderRebindList();
+  btnResetKeys.addEventListener("click", () => {
+    keybinds = { ...DEFAULT_KEYS };
+    listeningAction = null;
+    localStorage.setItem("ddl_keybinds", JSON.stringify(keybinds));
+    rebindError.classList.add("hidden");
+    renderRebindList();
+  });
+
   const settings = {
     volume: parseFloat(localStorage.getItem("ddl_volume") || "0.6"),
     sensitivity: parseFloat(localStorage.getItem("ddl_sens") || "0.35"),
     colorblind: localStorage.getItem("ddl_colorblind") === "1",
+    reducedMotion: localStorage.getItem("ddl_reduced_motion") === "1",
+    largeText: localStorage.getItem("ddl_large_text") === "1",
   };
   optVolume.value = String(settings.volume);
   optSens.value = String(settings.sensitivity);
   optColorblind.checked = settings.colorblind;
+  optReducedMotion.checked = settings.reducedMotion;
+  optLargeText.checked = settings.largeText;
   document.body.classList.toggle("colorblind", settings.colorblind);
+  document.body.classList.toggle("reduced-motion", settings.reducedMotion);
+  document.body.classList.toggle("large-text", settings.largeText);
   optVolume.addEventListener("input", () => {
     settings.volume = parseFloat(optVolume.value);
     localStorage.setItem("ddl_volume", String(settings.volume));
@@ -63,6 +127,44 @@
     localStorage.setItem("ddl_colorblind", settings.colorblind ? "1" : "0");
     document.body.classList.toggle("colorblind", settings.colorblind);
   });
+  optReducedMotion.addEventListener("change", () => {
+    settings.reducedMotion = optReducedMotion.checked;
+    localStorage.setItem("ddl_reduced_motion", settings.reducedMotion ? "1" : "0");
+    document.body.classList.toggle("reduced-motion", settings.reducedMotion);
+  });
+  optLargeText.addEventListener("change", () => {
+    settings.largeText = optLargeText.checked;
+    localStorage.setItem("ddl_large_text", settings.largeText ? "1" : "0");
+    document.body.classList.toggle("large-text", settings.largeText);
+  });
+
+  let subtitleTimer = null;
+  let lastSpawnedShadePos = null;
+  let shadeArrowUntil = 0;
+  function showSubtitle(text, ms = 2800) {
+    elSubtitle.textContent = text;
+    elSubtitle.classList.remove("hidden");
+    if (subtitleTimer) clearTimeout(subtitleTimer);
+    subtitleTimer = setTimeout(() => elSubtitle.classList.add("hidden"), ms);
+  }
+
+  async function refreshLeaderboard() {
+    try {
+      const res = await fetch("/api/leaderboard");
+      const data = await res.json();
+      lbBody.innerHTML = "";
+      const entries = data.entries || [];
+      if (!entries.length) {
+        lbBody.innerHTML = '<tr><td colspan="4">Chưa có điểm nào được lưu.</td></tr>';
+        return;
+      }
+      entries.forEach((e, idx) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${idx + 1}</td><td>${e.name}</td><td>${e.score}</td><td>${e.nights_won}/3</td>`;
+        lbBody.appendChild(tr);
+      });
+    } catch (_) {}
+  }
 
   // Procedural Web Audio (night ambience + SFX)
   let audioCtx = null;
@@ -261,6 +363,8 @@
   // Session & UI state
   let ws = null;
   let currentNight = 1;
+  let currentSeed = 1;
+  let nightsWon = 0;
   let totalGameScore = 0;
   let screenMode = "menu"; // menu | intro | playing | paused | result | dawn
   let lastState = null;
@@ -272,7 +376,23 @@
   let pendingPauseToggle = false;
 
   window.addEventListener("keydown", (e) => {
-    if ((e.code === "Escape" || e.code === "KeyP") && !e.repeat) {
+    if (listeningAction) {
+      e.preventDefault();
+      const dup = Object.entries(keybinds).find(([a, c]) => a !== listeningAction && c === e.code);
+      if (dup) {
+        rebindError.textContent = `Phím ${e.code} đang được dùng cho "${ACTION_LABELS[dup[0]]}". Hãy chọn phím khác.`;
+        rebindError.classList.remove("hidden");
+        return;
+      }
+      keybinds[listeningAction] = e.code;
+      localStorage.setItem("ddl_keybinds", JSON.stringify(keybinds));
+      listeningAction = null;
+      rebindError.classList.add("hidden");
+      renderRebindList();
+      return;
+    }
+    if (document.activeElement === lbName) return;
+    if ((e.code === keybinds.pause || e.code === "KeyP") && !e.repeat) {
       if (screenMode === "playing" || screenMode === "paused") {
         pendingPauseToggle = true;
       }
@@ -329,22 +449,57 @@
   function startNight(night) {
     ensureAudio();
     currentNight = night;
+    currentSeed = Math.floor(Math.random() * 100000) + 1;
     clearEntityPools();
     buildNightGeometry(night);
     connectWS(() => {
-      ws.send(JSON.stringify({ cmd: "start", night, seed: Math.floor(Math.random() * 100000) + 1 }));
+      ws.send(JSON.stringify({ cmd: "start", night, seed: currentSeed }));
       screenMode = "playing";
       overlay.classList.add("hidden");
+      saveScorePanel.classList.add("hidden");
+      leaderboardPanel.classList.add("hidden");
     });
   }
 
   btnSettings.addEventListener("click", () => {
+    leaderboardPanel.classList.add("hidden");
     settingsPanel.classList.toggle("hidden");
+  });
+
+  btnLeaderboard.addEventListener("click", () => {
+    settingsPanel.classList.add("hidden");
+    leaderboardPanel.classList.toggle("hidden");
+    if (!leaderboardPanel.classList.contains("hidden")) refreshLeaderboard();
+  });
+
+  btnSaveScore.addEventListener("click", async () => {
+    const name = lbName.value.trim();
+    lbSaveMsg.textContent = "";
+    try {
+      const res = await fetch("/api/leaderboard", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, score: totalGameScore, nights_won: nightsWon, seed: currentSeed }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        lbSaveMsg.textContent = data.error || "Tên không hợp lệ.";
+      } else {
+        lbSaveMsg.textContent = "Đã lưu vào bảng xếp hạng!";
+        btnSaveScore.disabled = true;
+        refreshLeaderboard();
+        leaderboardPanel.classList.remove("hidden");
+      }
+    } catch (_) {
+      lbSaveMsg.textContent = "Không thể lưu điểm lúc này.";
+    }
   });
 
   btnMenu.addEventListener("click", () => {
     totalGameScore = 0;
+    nightsWon = 0;
     currentNight = 1;
+    saveScorePanel.classList.add("hidden");
     showModal("menu", "Đảo Đèn Lồng", "Đảo Đèn Lồng · Ba Hòn Đảo", NIGHT_INTROS[1].quote, "Bắt đầu Đêm 1", false, false);
   });
 
@@ -380,7 +535,11 @@
     else if (ev.name === "pulse") { pulseAnim = 1.0; playTone(440, 0.32, "sine", 0.12); }
     else if (ev.name === "dash") playTone(320, 0.12, "triangle", 0.09);
     else if (ev.name === "player_hit") playTone(150, 0.3, "sawtooth", 0.11);
-    else if (ev.name === "shade_spawned") playTone(110, 0.25, "sawtooth", 0.06);
+    else if (ev.name === "shade_spawned") {
+      playTone(110, 0.25, "sawtooth", 0.06);
+      showSubtitle("⚠ Bóng Mực xuất hiện!");
+      if (ev.data && ev.data.pos) { lastSpawnedShadePos = ev.data.pos; shadeArrowUntil = performance.now() + 3500; }
+    }
     else if (ev.name === "paused") {
       showModal("paused", "Tạm dừng", `Đêm ${currentNight}`, "Logic trò chơi đang dừng hoàn toàn.", "Tiếp tục", true, true);
     } else if (ev.name === "resumed") {
@@ -397,15 +556,15 @@
         if (keys.has("KeyJ")) camYawDeg = (camYawDeg + 2.2) % 360;
         if (keys.has("KeyL")) camYawDeg = (camYawDeg - 2.2) % 360;
       }
-      const mx = (keys.has("KeyD") || keys.has("ArrowRight") ? 1 : 0) - (keys.has("KeyA") || keys.has("ArrowLeft") ? 1 : 0);
-      const mz = (keys.has("KeyS") || keys.has("ArrowDown") ? 1 : 0) - (keys.has("KeyW") || keys.has("ArrowUp") ? 1 : 0);
+      const mx = (keys.has(keybinds.right) || keys.has("ArrowRight") ? 1 : 0) - (keys.has(keybinds.left) || keys.has("ArrowLeft") ? 1 : 0);
+      const mz = (keys.has(keybinds.down) || keys.has("ArrowDown") ? 1 : 0) - (keys.has(keybinds.up) || keys.has("ArrowUp") ? 1 : 0);
       ws.send(JSON.stringify({
         move: [mx, mz],
         cam_yaw_deg: camYawDeg,
-        jump: keys.has("Space"),
-        interact: keys.has("KeyE"),
-        pulse: keys.has("KeyQ") || keys.has("KeyF"),
-        dash: keys.has("ShiftLeft") || keys.has("ShiftRight"),
+        jump: keys.has(keybinds.jump),
+        interact: keys.has(keybinds.interact),
+        pulse: keys.has(keybinds.pulse) || keys.has("KeyF"),
+        dash: keys.has(keybinds.dash) || keys.has("ShiftRight"),
         pause: pendingPauseToggle,
       }));
       pendingPauseToggle = false;
@@ -555,10 +714,26 @@
     if (totalSec <= 10 && totalSec > 0 && totalSec !== lastCountdownSec && s.state === "playing") {
       lastCountdownSec = totalSec;
       playTone(620, 0.08, "sine", 0.07);
+      showSubtitle(`Bình minh sau ${totalSec} giây!`, 1100);
     }
 
     elWind.classList.toggle("hidden", !(s.wind.active || s.wind_warning));
     elWind.textContent = s.wind.active ? `Gió mạnh (${Math.round(s.wind.dir_deg)}°)` : "Sắp có gió mạnh...";
+    if (s.wind_warning) showSubtitle("⚠ Gió lớn sắp thổi!", 1500);
+
+    // Shade spawn directional arrow
+    if (lastSpawnedShadePos && performance.now() < shadeArrowUntil && s.state === "playing") {
+      const sp = new THREE.Vector3(lastSpawnedShadePos[0], lastSpawnedShadePos[1] + 1.0, lastSpawnedShadePos[2]).project(camera);
+      let sx = sp.x, sy = sp.y;
+      if (sp.z > 1) { sx = -sx; sy = -sy; }
+      const ang = Math.atan2(sy, sx);
+      elShadeArrow.style.left = `${window.innerWidth / 2 + Math.cos(ang) * (window.innerWidth * 0.44)}px`;
+      elShadeArrow.style.top = `${window.innerHeight / 2 - Math.sin(ang) * (window.innerHeight * 0.40)}px`;
+      elShadeArrow.style.transform = `translate(-50%, -50%) rotate(${90 - (ang * 180) / Math.PI}deg)`;
+      elShadeArrow.classList.remove("hidden");
+    } else {
+      elShadeArrow.classList.add("hidden");
+    }
 
     const litCount = s.lanterns.filter((l) => l.lit).length;
     const targetLit = Math.ceil(0.6 * s.lanterns.length);
@@ -603,27 +778,119 @@
     }
 
     if ((s.state === "won" || s.state === "lost") && screenMode === "playing") {
+      btnSaveScore.disabled = false;
+      lbSaveMsg.textContent = "";
       if (s.state === "won") {
         totalGameScore += s.score;
+        nightsWon = Math.max(nightsWon, currentNight);
         if (currentNight === 3) {
           showModal("dawn", "Bình Minh Lên!", "Hoàn thành cả 3 Đêm", `Đảo Đèn Lồng đã sáng trở lại! Tổng điểm: ${totalGameScore}`, "Chơi lại từ Đêm 1", false, true);
+          saveScorePanel.classList.remove("hidden");
         } else {
           showModal("result", `Hoàn thành Đêm ${currentNight}!`, "Chiến thắng", `Điểm Đêm ${currentNight}: ${s.score} · Tổng điểm: ${totalGameScore}`, `Đêm ${currentNight + 1} →`, true, true);
+          saveScorePanel.classList.add("hidden");
         }
       } else {
-        showModal("result", `Thất bại ở Đêm ${currentNight}`, "Sương đen bao phủ", `Điểm đạt được: ${s.score} · Đèn đã thắp: ${litCount}/${s.lanterns.length}`, "Chơi lại Đêm này", false, true);
+        showModal("result", `Thất bại ở Đêm ${currentNight}`, "Sương đen bao phủ", `Tổng điểm các Đêm thắng: ${totalGameScore} · Đèn Đêm này: ${litCount}/${s.lanterns.length}`, "Chơi lại Đêm này", false, true);
+        saveScorePanel.classList.remove("hidden");
       }
     }
   }
 
-  function animate() {
+  // Optional browser WebGL 1280x720 Benchmark Mode (?bench=1&seed=42&duration=30)
+  const params = new URLSearchParams(window.location.search);
+  const isBench = params.get("bench") === "1";
+  let benchData = null;
+
+  if (isBench) {
+    const tLoad0 = performance.now();
+    const durationS = Math.max(1, parseFloat(params.get("duration") || "30"));
+    overlay.classList.add("hidden");
+    renderer.setSize(1280, 720);
+    camera.aspect = 1280 / 720;
+    camera.updateProjectionMatrix();
+    buildNightGeometry(1);
+    const lanterns = [
+      { id: "L1", pos: [0, 0, 25], lit: true, fuel: 100, deposited: 10, ever_lit: true },
+      { id: "L2", pos: [23.8, 0, 7.7], lit: true, fuel: 100, deposited: 10, ever_lit: true },
+      { id: "L3", pos: [14.7, 0, -20.2], lit: true, fuel: 100, deposited: 10, ever_lit: true },
+      { id: "L4", pos: [-14.7, 0, -20.2], lit: false, fuel: 0, deposited: 0, ever_lit: false },
+      { id: "L5", pos: [-23.8, 0, 7.7], lit: false, fuel: 0, deposited: 0, ever_lit: false },
+    ];
+    const motes = Array.from({ length: 100 }, (_, i) => {
+      const r = 36 * Math.sqrt((i + 0.5) / 100);
+      const a = (i + 1) * 2.3999632297;
+      return { id: `M${i + 1}`, pos: [r * Math.cos(a), 0, r * Math.sin(a)] };
+    });
+    const shades = Array.from({ length: 200 }, (_, i) => {
+      const r = 37 * Math.sqrt((i + 0.5) / 200);
+      const a = (i + 1) * 2.3999632297;
+      return { id: `S${i + 1}`, pos: [r * Math.cos(a), 0, r * Math.sin(a)], state: "wander", ang: a };
+    });
+    benchData = {
+      tLoad0, loadMs: null, tWarmStart: null, tMeasStart: null, lastFrame: null,
+      durationS, dts: [], done: false, lanterns, motes, shades,
+    };
+  }
+
+  function animate(nowMs) {
     requestAnimationFrame(animate);
+    if (benchData) {
+      const now = nowMs || performance.now();
+      if (benchData.loadMs === null) {
+        benchData.loadMs = now - benchData.tLoad0;
+        benchData.tWarmStart = now;
+        benchData.lastFrame = now;
+      }
+      const dtMs = Math.max(0.1, now - benchData.lastFrame);
+      benchData.lastFrame = now;
+      const elapsedS = (now - benchData.tWarmStart) / 1000;
+      for (const sh of benchData.shades) {
+        sh.ang += 0.4 * (dtMs / 1000);
+        sh.pos[0] += Math.cos(sh.ang) * 2.0 * (dtMs / 1000);
+        sh.pos[2] += Math.sin(sh.ang) * 2.0 * (dtMs / 1000);
+        const rad = Math.hypot(sh.pos[0], sh.pos[2]);
+        if (rad > 39) { sh.pos[0] *= 39 / rad; sh.pos[2] *= 39 / rad; }
+      }
+      syncScene({
+        night: 1, tick: Math.floor(elapsedS * 60), state: "playing",
+        player: { pos: [0, 0, 0] }, lanterns: benchData.lanterns,
+        motes: benchData.motes, shades: benchData.shades, drifters: [], charms: [],
+      });
+      const angle = (elapsedS / 15.0) * Math.PI * 2;
+      camera.position.set(30 * Math.cos(angle), 15, -30 * Math.sin(angle));
+      camera.lookAt(0, 0, 0);
+      if (elapsedS >= 3.0 && !benchData.done) {
+        if (benchData.tMeasStart === null) benchData.tMeasStart = now;
+        benchData.dts.push(dtMs);
+        if ((now - benchData.tMeasStart) / 1000 >= benchData.durationS) {
+          benchData.done = true;
+          const n = benchData.dts.length;
+          const sum = benchData.dts.reduce((a, b) => a + b, 0);
+          const desc = [...benchData.dts].sort((a, b) => b - a);
+          const k = Math.max(1, Math.ceil(0.01 * n));
+          const p1 = 1000 / (desc.slice(0, k).reduce((a, b) => a + b, 0) / k);
+          const asc = [...benchData.dts].sort((a, b) => a - b);
+          const p95 = asc[Math.min(n - 1, Math.ceil(0.95 * n) - 1)];
+          const out = {
+            contract_version: "1.3", avg_fps: +(1000 * n / sum).toFixed(2),
+            p1_low_fps: +p1.toFixed(2), frame_ms_p95: +p95.toFixed(3), frames: n,
+            load_ms: +benchData.loadMs.toFixed(2), peak_mem_mb: null,
+            vsync_off: false, renderer: "Three.js r128 WebGL (Browser 1280x720)", os: navigator.platform,
+          };
+          showSubtitle(`Bench xong: avg=${out.avg_fps} FPS, 1%low=${out.p1_low_fps} FPS`, 60000);
+          window.__BENCH_RESULT__ = out;
+        }
+      }
+      renderer.render(scene, camera);
+      return;
+    }
     if (pulseAnim > 0) {
       pulseAnim = Math.max(0, pulseAnim - 0.04);
       const scale = 1 + (1 - pulseAnim) * 9.5;
       pulseRing.position.set(playerGroup.position.x, playerGroup.position.y + 0.15, playerGroup.position.z);
       pulseRing.scale.set(scale, scale, 1);
-      pulseRing.material.opacity = pulseAnim * 0.85;
+      pulseRing.material.opacity = settings.reducedMotion ? 0 : pulseAnim * 0.85;
     }
     renderer.render(scene, camera);
   }

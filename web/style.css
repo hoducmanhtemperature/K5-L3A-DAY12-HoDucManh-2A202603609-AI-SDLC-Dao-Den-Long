@@ -14,7 +14,10 @@ html, body {
   margin: 0; padding: 0; width: 100%; height: 100%;
   overflow: hidden; background: var(--sky); color: var(--ink);
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 18px;
 }
+body.large-text { font-size: 22.5px; }
+body.reduced-motion * { animation: none !important; transition: none !important; }
 #canvas-wrap { position: fixed; inset: 0; }
 #hud {
   position: fixed; inset: 0; pointer-events: none;
@@ -31,8 +34,8 @@ html, body {
 }
 .card.center { text-align: center; }
 .card.right { text-align: right; color: var(--gold); }
-.label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
-#timer { font-size: 24px; letter-spacing: 0.04em; color: var(--core); }
+.label { display: block; font-size: 1rem; color: var(--muted); margin-bottom: 4px; }
+#timer { font-size: 1.5rem; letter-spacing: 0.04em; color: var(--core); }
 #timer.warn { color: var(--danger); animation: blink 0.8s infinite; }
 @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
 .wind-badge {
@@ -77,6 +80,29 @@ body.colorblind #timer.warn::before {
   text-shadow: 0 0 10px rgba(255, 179, 71, 0.9);
   transform-origin: center;
 }
+.shade-arrow { color: var(--danger); text-shadow: 0 0 10px rgba(255, 90, 95, 0.9); }
+.subtitle {
+  align-self: center; background: rgba(14, 20, 48, 0.92);
+  border: 1px solid var(--danger); color: var(--ink);
+  padding: 6px 16px; border-radius: 10px; font-size: 1rem; font-weight: 600;
+}
+.rebind-section { border-top: 1px solid rgba(255, 255, 255, 0.12); padding-top: 8px; }
+.rebind-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.rebind-list { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.rebind-row { display: flex; justify-content: space-between; align-items: center; gap: 6px; font-size: 0.85rem; }
+.rebind-error { color: var(--danger); font-size: 0.85rem; margin-bottom: 4px; }
+.leaderboard-panel, .save-score-panel {
+  text-align: left; background: rgba(11, 16, 40, 0.78); border-radius: 8px;
+  padding: 12px 14px; margin-bottom: 14px; max-height: 220px; overflow-y: auto;
+}
+.lb-table { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 0.9rem; }
+.lb-table th, .lb-table td { padding: 4px 6px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); text-align: left; }
+.save-score-row { display: flex; gap: 8px; margin-top: 6px; }
+.save-score-row input {
+  flex: 1; background: #0e1430; color: var(--ink); border: 1px solid #415094;
+  border-radius: 6px; padding: 6px 10px; font-size: 1rem; user-select: text;
+}
+.small-btn { padding: 6px 14px; font-size: 0.9rem; }
 .hidden { display: none !important; }
 .overlay {
   position: fixed; inset: 0; background: rgba(8, 11, 28, 0.84);

@@ -28,6 +28,8 @@
     </div>
 
     <div id="offscreen-arrow" class="arrow hidden">▲</div>
+    <div id="shade-arrow" class="arrow shade-arrow hidden">▲</div>
+    <div id="subtitle-bar" class="subtitle hidden"></div>
     <div id="interact-prompt" class="prompt hidden">E — Nạp ánh sáng (<span id="prompt-progress">0/10</span>)</div>
 
     <div class="hud-bottom">
@@ -64,10 +66,36 @@
         <label>Âm lượng <input id="opt-volume" type="range" min="0" max="1" step="0.05" value="0.6"></label>
         <label>Độ nhạy chuột <input id="opt-sens" type="range" min="0.1" max="1.0" step="0.05" value="0.35"></label>
         <label>Bảng màu dễ phân biệt <input id="opt-colorblind" type="checkbox"></label>
+        <label>Giảm chuyển động <input id="opt-reduced-motion" type="checkbox"></label>
+        <label>Chữ lớn (×1.25) <input id="opt-large-text" type="checkbox"></label>
+        <div class="rebind-section">
+          <div class="rebind-header">
+            <strong>Đổi phím điều khiển</strong>
+            <button id="btn-reset-keys" type="button" class="secondary small-btn">Khôi phục mặc định</button>
+          </div>
+          <div id="rebind-error" class="rebind-error hidden"></div>
+          <div id="rebind-list" class="rebind-list"></div>
+        </div>
+      </div>
+      <div class="leaderboard-panel hidden" id="leaderboard-panel">
+        <strong>Bảng xếp hạng cục bộ (Top 10)</strong>
+        <table class="lb-table">
+          <thead><tr><th>#</th><th>Tên</th><th>Điểm</th><th>Đêm</th></tr></thead>
+          <tbody id="lb-body"></tbody>
+        </table>
+      </div>
+      <div class="save-score-panel hidden" id="save-score-panel">
+        <label for="lb-name">Lưu điểm (3–12 ký tự):</label>
+        <div class="save-score-row">
+          <input id="lb-name" type="text" minlength="3" maxlength="12" placeholder="May_01">
+          <button id="btn-save-score" type="button" class="small-btn">Lưu</button>
+        </div>
+        <div id="lb-save-msg" class="muted-small"></div>
       </div>
       <div class="modal-actions" id="modal-actions">
         <button id="btn-primary" type="button">Bắt đầu Đêm 1</button>
         <button id="btn-secondary" type="button" class="secondary hidden">Chơi lại Đêm</button>
+        <button id="btn-leaderboard" type="button" class="secondary">Bảng xếp hạng</button>
         <button id="btn-settings" type="button" class="secondary">Cài đặt</button>
         <button id="btn-menu" type="button" class="secondary hidden">Về menu</button>
       </div>

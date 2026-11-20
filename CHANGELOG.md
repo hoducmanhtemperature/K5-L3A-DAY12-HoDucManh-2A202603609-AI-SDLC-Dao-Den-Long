@@ -2,6 +2,14 @@
 
 All notable changes to **Đảo Đèn Lồng** across lab phases.
 
+## [v1.0.0 / phase-4] — Ticket-04 "Bình minh v1.0.0" (Test Contract v1.3)
+### Added
+- **Benchmark Mode (`bench_cmd`):** `python3 src/bench.py --seed 42 --duration 30 --out bench.json` (plus interactive WebGL 1280×720 `?bench=1` mode in `web/app.js`), running Night 1 with 200 wander Shades, 100 motes, L1–L3 lit at fuel 100, CCW circular orbit camera (R=30 m, Y=15 m, 15 s/rev), 3 s warmup + duration measurement, outputting `avg_fps`, `p1_low_fps`, `frame_ms_p95`, `frames`, `load_ms`, `peak_mem_mb`, `vsync_off`, `renderer`, `os`.
+- **Soak Test (`soak_cmd`):** `python3 src/soak.py --seed 7 --nights 10 --out soak.json`, executing 10 consecutive headless nights (1→2→3 cycling, seed `7+i`) in one process with seeded random inputs and RSS leak checks (`crashes == 0`, `mem_end_mb <= 1.2 * mem_start_mb`).
+- **Local Persistent Leaderboard:** Top-10 local disk leaderboard (`src/game/leaderboard.py`, `GET/POST /api/leaderboard`, main-menu viewer, Dawn/Loss name entry `3–12` chars `[A-Za-z0-9_]` + Vietnamese letters), sorted by score desc (tie: earlier `achieved_at`), plus CLI `python3 src/server.py --export-leaderboard out.json`.
+- **Accessibility:** Full key rebinding (9 actions) with duplicate-key detection and "Khôi phục mặc định" persisted in `localStorage`; visual subtitles & screen-edge Shade spawn directional arrow; Reduced Motion toggle; `>= 18 px` base UI font size at 1280×720 + Large Text (`×1.25`) toggle.
+- **Release Packaging:** `Dockerfile`, `game.contract.json` v1.3 (`bench_cmd`, `soak_cmd`), committed `bench.json` & `soak.json`, complete 4-phase retro (`docs/notes/retro.md`), and updated `README.md` / `CREDITS.md`.
+
 ## [phase-3] — Ticket-03 "Đèn cạn dầu" (Test Contract v1.2)
 ### Breaking Changes
 - **[REPLACED] Win condition:** Lighting all lanterns no longer ends the night early (`all_lit` removed). Players must survive until dawn (`time_left_s == 0`) with at least `ceil(0.6 * total)` lit lanterns (`dawn_survived`: 3/5 Night 1, 4/6 Night 2, 5/7 Night 3).

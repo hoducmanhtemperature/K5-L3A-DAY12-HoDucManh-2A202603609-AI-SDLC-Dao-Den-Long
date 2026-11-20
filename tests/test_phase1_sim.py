@@ -32,8 +32,8 @@ class TestPhase1Simulation(unittest.TestCase):
 
     def test_contract_json_matches_phase1_tuning(self) -> None:
         contract = json.loads((ROOT / "game.contract.json").read_text(encoding="utf-8"))
-        # Updated in Phase 3 (Ticket-03): contract_version upgraded to 1.2 with fuel/dawn keys
-        self.assertEqual(contract["contract_version"], "1.2")
+        # Updated in Phase 4 (Ticket-04): contract_version upgraded to 1.3 (adds bench_cmd & soak_cmd)
+        self.assertEqual(contract["contract_version"], "1.3")
         required_tuning_keys = {
             "player_speed", "carry_capacity", "lantern_cost", "lantern_count_night1",
             "pickup_radius", "interact_radius", "pulse_cost", "pulse_radius",

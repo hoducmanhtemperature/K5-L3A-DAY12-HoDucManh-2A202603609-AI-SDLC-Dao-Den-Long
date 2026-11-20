@@ -1,0 +1,12 @@
+{
+  "contract_version": "1.3",
+  "avg_fps": 1871.08,
+  "p1_low_fps": 568.72,
+  "frame_ms_p95": 0.552,
+  "frames": 56133,
+  "load_ms": 23.43,
+  "peak_mem_mb": 19.75,
+  "vsync_off": true,
+  "renderer": "Python 3.13.14 60Hz-Sim + Three.js r128 WebGL (CLI headless-pipeline bench)",
+  "os": "Linux 7.1.5-201.fc44.x86_64 (x86_64)"
+}

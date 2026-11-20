@@ -20,7 +20,8 @@ class TestPhase3FuelAndDawnSurvival(unittest.TestCase):
 
     def test_contract_v1_2_keys_and_snapshot_schema(self) -> None:
         contract = json.loads((ROOT / "game.contract.json").read_text(encoding="utf-8"))
-        self.assertEqual(contract["contract_version"], "1.2")
+        # Updated in Phase 4 (Ticket-04): contract_version upgraded to 1.3 while preserving all v1.2 keys
+        self.assertEqual(contract["contract_version"], "1.3")
         for key in (
             "fuel_max", "fuel_decay_per_s", "fuel_per_mote", "relight_cost",
             "win_ratio", "drain_per_s", "low_fuel_threshold", "capacity_max",

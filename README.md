@@ -1,150 +1,63 @@
-# Day 12 — AI SDLC: Đảo Đèn Lồng
+# Đảo Đèn Lồng — Release `v1.0.0` (Test Contract v1.3)
 
-> **Cá nhân** (1 người / 1 MSSV) · Áp dụng SDLC cùng AI để xây một **game 3D** qua **4 phase**, từ yêu cầu ban đầu tới bản phát hành.
-> **Lab board + trợ giảng:** **[Đảo Đèn Lồng Lab](https://claude.ai/artifact/Q1RYyv1dxjUczzCbd2ZnoW)**
+A 3D third-person fairy-tale survival game built across 4 AI SDLC phases (`phase-1` → `phase-4` / `v1.0.0`) with a deterministic 60-Hz Python simulation core and a zero-dependency Three.js WebGL renderer.
 
----
+## System Requirements
+- **Python 3.10+** (tested on Python 3.13, standard library only — zero `pip` installs required)
+- Any modern web browser with WebGL (for the 3D interactive mode)
+- Optional: Docker (see `Dockerfile`)
 
-## Tài liệu của lab
-
-| File | Nội dung |
-|---|---|
-| [GUIDE.md](GUIDE.md) | Hướng dẫn làm lab: vòng làm việc mỗi phase, harness, kiểm chứng, token |
-| [CHECKPOINTS.md](CHECKPOINTS.md) | Các mốc tự kiểm tra từ chuẩn bị đến nộp bài |
-| [SUBMISSION.md](SUBMISSION.md) | Đặt tên repo, hạn nộp, tag, Release, video, checklist |
-| [RULES.md](RULES.md) | Quy định: AI, trung thực về bằng chứng, bản quyền, bảo mật |
-| [RUBRIC.md](RUBRIC.md) | Thang điểm chi tiết |
-
-## Lab board
-
-Yêu cầu dự án được phát hành tại **[Đảo Đèn Lồng Lab](https://claude.ai/artifact/Q1RYyv1dxjUczzCbd2ZnoW)**. Mỗi phase là một tab (tab chưa phát hành bị khóa), mỗi tab có trợ giảng AI riêng chỉ trả lời trong phạm vi phase đó. Trợ giảng cần đăng nhập claude.ai và dùng lượt Claude của bạn.
-
-## Dự án
-
-**Đảo Đèn Lồng**: game 3D góc nhìn thứ ba. Mây, người giữ đèn nhỏ tuổi, gom đom đóm để thắp lại các Đèn Lồng Lớn và né Bóng Mực trong sương đen.
-
-- Không ràng buộc công nghệ; chạy được trên macOS hoặc Linux.
-- Tuân theo **Test Contract** (chế độ headless) để được chấm tự động và so sánh với nhau.
-
-| Phase | Bạn nhận | Nộp |
-|---|---|---|
-| 1 | **PRD-0** (mô tả tổng quát) + Test Contract | tag `phase-1` |
-| 2 | **Ticket-02**, phát hành khi Phase 1 kết thúc | tag `phase-2` |
-| 3 | **Ticket-03**, phát hành khi Phase 2 kết thúc | tag `phase-3` |
-| 4 | **Ticket-04**, phát hành khi Phase 3 kết thúc | tag `phase-4` + Release `v1.0.0` |
-
-Yêu cầu sẽ được bổ sung và có thể thay đổi giữa các phase, giống dự án thật.
-
-### Lịch 4 giờ
-
-Bài lab kéo dài **4 giờ**. Phase 1 và 2 khoảng **1 giờ**, Phase 3 khoảng **30 phút**, Phase 4 khoảng **1 giờ 30 phút**. Mỗi phase phát hành đúng mốc giờ. Phase mới xuất hiện trên lab board khi tới mốc.
-
-| Mốc | Sự kiện | Hạn tag |
-|---|---|---|
-| 0h | Phát hành **Phase 1** (PRD-0), gồm cả phần chuẩn bị | `phase-1` trước mốc 1h |
-| 1h | Phát hành **Phase 2** | `phase-2` trước mốc 2h |
-| 2h | Phát hành **Phase 3** | `phase-3` trước mốc 2h30 |
-| 2h30 | Phát hành **Phase 4** | `phase-4`, Release `v1.0.0` và video trước mốc 4h |
-| 4h | Hết giờ lab, chốt bài | |
-
-Hết giờ mỗi phase thì tag và chuyển sang phase tiếp theo, dù phase chưa hoàn hảo. Chỗ chưa xong ghi trung thực trong bằng chứng.
-
----
-
-## Gợi ý SDLC (cách làm là của bạn)
-
-Mỗi phase là một vòng nhỏ. Công cụ, thứ tự, định dạng tài liệu đều tự do; đây chỉ là gợi ý:
-
-1. **Requirements:** biến yêu cầu thành tiêu chí nghiệm thu kiểm chứng được. Chỗ mơ hồ thì tự giả định và ghi lại.
-2. **Plan:** nghĩ cách kiểm chứng **trước** khi để agent viết code.
-3. **Build:** để agent viết, bạn điều phối và review.
-4. **Verify:** chạy thật, kiểm tra hành vi thật. *Không có bằng chứng thì chưa xong*: "agent bảo chạy rồi" không phải bằng chứng.
-5. **Evaluate:** cái gì đạt, AI sai ở đâu, harness (AGENTS.md, skill, hook) cần chỉnh gì.
-6. **Release:** gắn tag.
-
-## Ba điều cần nhớ
-
-> Bạn được **tự do sáng tạo thêm** quanh phần lõi (nhân vật, cơ chế nhỏ, câu chuyện, hiệu ứng, âm thanh…). Sáng tạo gọn và không phá yêu cầu được tính điểm trong hạng mục F của [RUBRIC](RUBRIC.md); ghi mục "Sáng tạo của tôi" trong README của bạn.
-
-- **Game tốt là game đúng yêu cầu của khách hàng**, không phải game phức tạp hay đẹp nhất. Làm đúng và chứng minh được là đúng trước, trau chuốt sau.
-- **Cân nhắc kỹ quota token của bạn.** Đốt nhiều token không làm bài tốt hơn. Ngữ cảnh gọn, kế hoạch rõ, kiểm chứng sớm thường vừa rẻ vừa đúng hơn chạy agent liên tục.
-- **Kiểm chứng là phần quan trọng nhất.** Bằng chứng (test, output headless, ảnh, số đo) đáng giá hơn lời mô tả.
-
----
-
-## Bàn giao cuối cùng
-
-Một **repo GitHub cá nhân, public**, gồm:
-
-1. **Toàn bộ mã nguồn** của game qua 4 phase, tag `phase-1` … `phase-4`, Release `v1.0.0`.
-2. **Video demo `.mp4` dưới 5 phút** (đính kèm Release `v1.0.0` hoặc `docs/demo/demo.mp4`, link ở đầu README): chơi thử và cho thấy bằng chứng game chạy đúng.
-3. **Bằng chứng kiểm chứng** của từng phase (định dạng tự chọn).
-4. **Harness AI đã dùng** (AGENTS.md / CLAUDE.md, skills, hooks, plugins…), giữ nguyên trong repo và lịch sử git.
-5. **Ghi chép ngắn:** spec/giả định mỗi phase, nhật ký dùng AI (gồm token/chi phí ước tính), retro.
-
-Không commit API key, token hay `.env`. Gửi link repo theo hướng dẫn của Coach.
-
-## Đánh giá (100 điểm)
-
-| Hạng mục | Điểm |
-|---|---|
-| Test tự động ẩn (headless, gồm kiểm tra lại phase trước) | 30 |
-| Kiểm chứng & bằng chứng của bạn | 20 |
-| Quy trình SDLC & harness AI | 15 |
-| Evaluation & retro (gồm cách bạn dùng token) | 10 |
-| Hiệu năng & ổn định | 10 |
-| Chất lượng sản phẩm (đúng yêu cầu, chơi được) | 10 |
-| Video demo | 5 |
-
-## Quy định
-
-- Dùng AI thoải mái; không sao chép repo của người khác.
-- Bằng chứng phải thật: test luôn đạt hay output sửa tay là vi phạm.
-- Nhân vật, bối cảnh là bản gốc của lab; asset bên ngoài chỉ dùng loại CC0/CC-BY/MIT hoặc tự tạo, ghi nguồn trong `CREDITS.md`.
-
----
-
-## Checkpoint 0 — Quick Verification (Python ≥ 3.10)
-
+## Quick Start (≤ 3 commands from a clean clone)
 ```bash
-python3 tools/hello_headless.py
-python3 tools/verify.py --ci --require-clean
-# Optional on local clones to enable pre-commit secret/test gate (CI always enforces):
-git config core.hooksPath .githooks
-```
-
----
-
-## Chơi game & Kiểm thử (Phase 2 — Ba Hòn Đảo · Contract v1.1)
-
-Yêu cầu: **Python ≥ 3.10** (không cần cài thư viện ngoài; Three.js `r128` MIT đã được đóng gói sẵn trong `web/vendor/three.min.js`).
-
-### 1. Chạy game 3D (tối đa 2 lệnh)
-```bash
-git clone https://github.com/hoducmanhtemperature/K5-L3-LAB-Day12-AI-SDLC.git && cd K5-L3-LAB-Day12-AI-SDLC
+git clone <repo-url> && cd K5-L3-LAB-Day12-AI-SDLC
 python3 src/server.py
 ```
-Mở trình duyệt tại địa chỉ in ra (mặc định `http://127.0.0.1:8080/`).
+Open `http://127.0.0.1:8080/` in your browser to play all 3 Nights (**Đảo Bến**, **Đảo Cau**, **Đảo Chuông**).
 
-### 2. Điều khiển
-- **Di chuyển:** `WASD` hoặc phím mũi tên
-- **Xoay camera:** Kéo chuột trái hoặc `J` / `L` (độ nhạy chuột & âm lượng lưu tự động trong `localStorage`)
-- **Nhảy:** `Space`
-- **Lướt (Dash):** `Shift` (`14 m/s`, `0.2 s`, hồi `1.5 s`, giữ độ cao trên không, hồi `0 s` khi có Bùa Gió)
-- **Nạp ánh sáng vào Đèn Lồng Lớn:** `E` (bán kính `2.0 m`)
-- **Tỏa Sáng:** `Q` hoặc `F` (tốn `3` đom đóm, bán kính 3D `5 m`, hồi `3 s`)
-- **Tạm dừng & Cài đặt:** `Esc` hoặc `P`
-
-### 3. Chuỗi 3 Đêm & Tính điểm (`game.contract.json` v1.1)
-- **Đêm 1 — Đảo Bến** (5 đèn, 300s) → **Đêm 2 — Đảo Cau** (6 đèn, cầu tre, bục nhảy, Gió Lạc, Bùa Gió, 330s) → **Đêm 3 — Đảo Chuông** (7 đèn, 3 tầng, 2 dốc, tháp chuông, gió mạnh, 360s) → **Bình Minh**.
-- `+10`/đom đóm nạp · `+100`/đèn thắp · `+5`/Bóng Mực trúng Tỏa Sáng · thắng: `+ floor(giây còn lại) × 2 + Ngọn Lửa × 50`.
-
-### 4. Chạy Test & Chế độ Headless (Test Contract v1.1)
+To run with Docker:
 ```bash
-python3 tools/verify.py --phase 2 --ci
-python3 src/headless.py --seed 42 --night 2 --scenario tests/scenarios/p2_features_night2.json --inputs tests/scenarios/p2_features_inputs.json --ticks 120 --out /tmp/p2.jsonl
+docker build -t dao-den-long:1.0.0 .
+docker run --rm -p 8080:8080 dao-den-long:1.0.0
 ```
 
-### 5. Sáng tạo của tôi
-- Âm thanh thủ tục bằng Web Audio API (nhạc/chuông phản hồi khi nhặt đom đóm, nạp đèn, thắp đèn, Tỏa Sáng, bị đánh và kết thúc Đêm) chạy thuần phía trình duyệt.
-- Hiệu ứng vòng ánh sáng an toàn quanh đèn đã thắp, ánh sáng & sương đảo sáng dần theo số đèn đã thắp, nón lá kèm đèn lồng nhỏ cho Mây. Toàn bộ phần sáng tạo chỉ nằm ở lớp hiển thị `web/` nên **không** làm đổi đầu ra headless của `src/game/sim.py`.
+## Controls (Default — All Rebindable in Settings)
+- `W A S D` / Arrow keys: Move Mây (camera-relative)
+- `Space`: Jump · `Shift`: Dash (`Lướt`)
+- Mouse Drag / `J` `L`: Rotate camera
+- `E`: Deposit motes / Refuel / Relight nearby Great Lantern
+- `Q` / `F`: Light Pulse (`Tỏa Sáng`, costs 3 motes)
+- `Esc` / `P`: Pause & Settings (Volume, Mouse Sensitivity, Colorblind Mode, Reduced Motion, Large Text `×1.25`, Key Rebinding)
+
+## Scoring & Rules (Contract v1.3 / Dawn Survival)
+- **Win condition:** Survive until dawn (`time_left_s == 0`) with at least `ceil(0.6 × total)` lit lanterns (`3/5` Night 1, `4/6` Night 2, `5/7` Night 3).
+- **Lantern Fuel:** Lit lanterns start at `100` fuel, decay `1.0/s`, lose their `6 m` safe zone below `30` (attracting Shades to `drain` `5.0/s`), and extinguish at `0`. Refuel gives `+10` fuel/mote; relighting costs `5` motes (vs `10` first light).
+- **Progressive Capacity:** Starts at `10`, `+2` per successful light/relight up to `20`.
+- **Points:** `+5`/mote deposited or refueled · `+100` first light · `+40` relight · `+5` Pulse stun (`+15` on draining Shade) · Dawn Victory bonus: `+50 + floor(fuel)` per lit lantern + `+50` per remaining Flame.
+
+## Verification, Headless, Benchmark, Soak & Leaderboard Commands
+```bash
+# 1. Full unit test suite + secret scan + determinism gate
+python3 tools/verify.py --phase 4
+
+# 2. Deterministic headless Test Contract v1.3 CLI
+python3 src/headless.py --seed 42 --night 1 --ticks 3600 --snapshot-every 30 --out run.jsonl
+
+# 3. Benchmark mode (Ticket-04: 200 wander Shades, 100 motes, L1-L3 lit, 3s warmup + 30s measure)
+python3 src/bench.py --seed 42 --duration 30 --out bench.json
+# Browser WebGL 1280x720 benchmark: open http://127.0.0.1:8080/?bench=1&seed=42&duration=30
+# (Note: browser WebGL cannot turn off OS compositor VSync or read process RSS, so peak_mem_mb is null in browser mode.)
+
+# 4. Soak test (10 consecutive nights 1->2->3 in one process, crash & RSS leak check)
+python3 src/soak.py --seed 7 --nights 10 --out soak.json
+
+# 5. Export local Top-10 Leaderboard
+python3 src/server.py --export-leaderboard out.json
+```
+
+## Sáng tạo của tôi
+- Procedural Web Audio night chimes & SFX (zero external audio files, offline-ready).
+- Fairy-tale *nón lá* with dangling warm lantern, 3D floating fuel bars above lanterns, and progressive night sky brightening (`0.15 + 0.55 * lit/total`).
+- All visual/audio additions live strictly in `web/` and never alter headless Test Contract output.
+
+## License & Credits
+MIT License — see [LICENSE](LICENSE), [CREDITS.md](CREDITS.md), [CHANGELOG.md](CHANGELOG.md), and [docs/notes/retro.md](docs/notes/retro.md).
