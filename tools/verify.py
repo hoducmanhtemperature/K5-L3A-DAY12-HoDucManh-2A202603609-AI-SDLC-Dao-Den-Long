@@ -185,7 +185,7 @@ def check_secrets(include_staged: bool = False) -> tuple[bool, list[str], list[s
 
 
 def check_phase_requirements(phase: str, root: pathlib.Path = ROOT) -> tuple[bool, list[str]]:
-    """Ensure --phase N (>0) has its spec, contract, and deterministic headless scenario passing."""
+    """Fail-closed check for --phase N (>0): spec, contract JSON, and deterministic headless scenario."""
     if phase == "0":
         return True, []
     spec_path = root / "docs" / "specs" / f"phase-{phase}.md"
@@ -195,39 +195,54 @@ def check_phase_requirements(phase: str, root: pathlib.Path = ROOT) -> tuple[boo
     contract_path = root / "game.contract.json"
     if not contract_path.is_file():
         return False, [f"Missing game.contract.json for --phase {phase}"]
+    try:
+        import json as _json
 
-    if root == ROOT:
-        # Run headless determinism double-run against phase-1 scenario when running on real repo
-        sc_path = root / "tests" / "scenarios" / "p1_win_night1.json"
-        in_path = root / "tests" / "scenarios" / "p1_win_inputs.json"
-        if sc_path.is_file() and in_path.is_file():
-            import tempfile
+        contract = _json.loads(contract_path.read_text(encoding="utf-8"))
+        if not isinstance(contract, dict) or not contract.get("contract_version") or not isinstance(contract.get("tuning"), dict):
+            return False, ["game.contract.json missing required 'contract_version' or 'tuning' object"]
+    except (OSError, ValueError) as exc:
+        return False, [f"Malformed game.contract.json: {exc}"]
 
-            with tempfile.TemporaryDirectory() as tmp:
-                out1 = pathlib.Path(tmp) / "run1.jsonl"
-                out2 = pathlib.Path(tmp) / "run2.jsonl"
-                base_args = [
-                    sys.executable,
-                    str(root / "src" / "headless.py"),
-                    "--seed",
-                    "42",
-                    "--night",
-                    "1",
-                    "--scenario",
-                    str(sc_path),
-                    "--inputs",
-                    str(in_path),
-                    "--ticks",
-                    "120",
-                    "--snapshot-every",
-                    "10",
-                ]
-                rc1, _, err1 = run_cmd([*base_args, "--out", str(out1)], cwd=root)
-                rc2, _, err2 = run_cmd([*base_args, "--out", str(out2)], cwd=root)
-                if rc1 != 0 or rc2 != 0:
-                    return False, [f"Headless scenario failed: rc1={rc1} ({err1}) rc2={rc2} ({err2})"]
-                if out1.read_text(encoding="utf-8") != out2.read_text(encoding="utf-8"):
-                    return False, ["Headless determinism check failed: run1 != run2"]
+    sc_dir = root / "tests" / "scenarios"
+    sc_files = sorted(sc_dir.glob(f"p{phase}_*_night*.json")) if sc_dir.is_dir() else []
+    if not sc_files:
+        return False, [f"Missing phase-{phase} scenario fixture (tests/scenarios/p{phase}_*_night*.json)"]
+
+    headless_py = root / "src" / "headless.py"
+    if not headless_py.is_file():
+        return False, ["Missing src/headless.py for phase determinism check"]
+
+    import tempfile
+
+    sc_path = sc_files[0]
+    in_candidate = sc_dir / sc_path.name.replace("_night1.json", "_inputs.json").replace("_night2.json", "_inputs.json").replace("_night3.json", "_inputs.json")
+    night_arg = "2" if "_night2" in sc_path.name else ("3" if "_night3" in sc_path.name else "1")
+    with tempfile.TemporaryDirectory() as tmp:
+        out1 = pathlib.Path(tmp) / "run1.jsonl"
+        out2 = pathlib.Path(tmp) / "run2.jsonl"
+        base_args = [
+            sys.executable,
+            str(headless_py),
+            "--seed",
+            "42",
+            "--night",
+            night_arg,
+            "--scenario",
+            str(sc_path),
+            "--ticks",
+            "120",
+            "--snapshot-every",
+            "10",
+        ]
+        if in_candidate.is_file():
+            base_args.extend(["--inputs", str(in_candidate)])
+        rc1, _, err1 = run_cmd([*base_args, "--out", str(out1)], cwd=root)
+        rc2, _, err2 = run_cmd([*base_args, "--out", str(out2)], cwd=root)
+        if rc1 != 0 or rc2 != 0:
+            return False, [f"Headless scenario failed: rc1={rc1} ({err1.strip()}) rc2={rc2} ({err2.strip()})"]
+        if out1.read_text(encoding="utf-8") != out2.read_text(encoding="utf-8"):
+            return False, ["Headless determinism check failed: run1 != run2"]
     return True, []
 
 

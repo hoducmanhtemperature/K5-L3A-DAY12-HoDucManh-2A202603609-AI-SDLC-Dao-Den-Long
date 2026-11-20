@@ -63,6 +63,7 @@ Command:
 - `random_motes`, `random_shades` (booleans): `false` disables auto-spawning.
 - `lanterns`: update matching IDs (`L1`..`L5`); supports `pos`, `lit`, `deposited`.
 - `motes`, `shades`: replace initial lists (`shades[]` may include `id`).
+- `time_left_s`: optional float overriding starting night time remaining.
 - Scenario setup emits **no events** and **no score**.
 
 ### E. Output JSONL

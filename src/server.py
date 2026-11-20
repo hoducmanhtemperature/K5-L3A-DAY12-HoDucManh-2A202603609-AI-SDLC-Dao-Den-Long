@@ -69,6 +69,8 @@ def read_ws_frame(sock: socket.socket) -> tuple[int, bytes] | None:
         if ext is None:
             return None
         length = struct.unpack("!Q", ext)[0]
+    if length > 65536:
+        raise ValueError(f"WebSocket frame too large: {length}")
     mask = recv_exact(4) if masked else b""
     if masked and mask is None:
         return None
@@ -116,41 +118,58 @@ class LanternHTTPHandler(http.server.SimpleHTTPRequestHandler):
         stop_flag = threading.Event()
 
         def reader() -> None:
-            while not stop_flag.is_set():
-                try:
-                    frame = read_ws_frame(conn)
-                except socket.timeout:
-                    continue
-                except OSError:
-                    break
-                if frame is None:
-                    break
-                opcode, payload = frame
-                if opcode == 0x8:  # Close
-                    break
-                if opcode == 0x9:  # Ping
+            nonlocal sim
+            try:
+                while not stop_flag.is_set():
                     try:
-                        conn.sendall(struct.pack("!BB", 0x8A, len(payload)) + payload)
-                    except OSError:
+                        frame = read_ws_frame(conn)
+                    except socket.timeout:
+                        continue
+                    except (OSError, ValueError):
                         break
-                    continue
-                if opcode == 0x1:  # Text
-                    try:
-                        msg = json.loads(payload.decode("utf-8"))
-                    except (UnicodeDecodeError, json.JSONDecodeError):
+                    if frame is None:
+                        break
+                    opcode, payload = frame
+                    if opcode == 0x8:  # Close
+                        break
+                    if opcode == 0x9:  # Ping
+                        try:
+                            conn.sendall(struct.pack("!BB", 0x8A, len(payload)) + payload)
+                        except OSError:
+                            break
                         continue
-                    if not isinstance(msg, dict):
-                        continue
-                    with lock:
-                        if msg.get("cmd") == "restart":
-                            seed = int(msg.get("seed", sim.seed + 1))
-                            sim.__init__(seed=seed, night=1)
-                            latest_input.clear()
-                        else:
-                            for k in ("move", "cam_yaw_deg", "jump", "interact", "pulse"):
-                                if k in msg:
-                                    latest_input[k] = msg[k]
-            stop_flag.set()
+                    if opcode == 0x1:  # Text
+                        try:
+                            msg = json.loads(payload.decode("utf-8"))
+                        except (UnicodeDecodeError, json.JSONDecodeError):
+                            continue
+                        if not isinstance(msg, dict):
+                            continue
+                        with lock:
+                            if msg.get("cmd") == "restart":
+                                raw_seed = msg.get("seed", sim.seed + 1)
+                                seed = raw_seed if isinstance(raw_seed, int) and not isinstance(raw_seed, bool) else sim.seed + 1
+                                sim = Simulation(seed=seed, night=1)
+                                latest_input.clear()
+                            else:
+                                mv = msg.get("move")
+                                if (
+                                    isinstance(mv, list)
+                                    and len(mv) == 2
+                                    and all(isinstance(v, (int, float)) and not isinstance(v, bool) for v in mv)
+                                ):
+                                    latest_input["move"] = [
+                                        max(-1.0, min(1.0, float(mv[0]))),
+                                        max(-1.0, min(1.0, float(mv[1]))),
+                                    ]
+                                yaw = msg.get("cam_yaw_deg")
+                                if isinstance(yaw, (int, float)) and not isinstance(yaw, bool):
+                                    latest_input["cam_yaw_deg"] = float(yaw)
+                                for k in ("jump", "interact", "pulse"):
+                                    if isinstance(msg.get(k), bool):
+                                        latest_input[k] = msg[k]
+            finally:
+                stop_flag.set()
 
         reader_thread = threading.Thread(target=reader, daemon=True)
         reader_thread.start()

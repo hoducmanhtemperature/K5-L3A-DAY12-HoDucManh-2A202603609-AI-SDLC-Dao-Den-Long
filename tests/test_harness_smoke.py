@@ -147,9 +147,11 @@ class TestHarnessSmoke(unittest.TestCase):
             self.assertIn("Missing phase spec", issues_p3[0])
             (tmp_root / "docs" / "specs").mkdir(parents=True)
             (tmp_root / "docs" / "specs" / "phase-3.md").write_text("# Spec\n", encoding="utf-8")
-            (tmp_root / "game.contract.json").write_text("{}", encoding="utf-8")
-            ok_p3_with_spec, _ = verify_tool.check_phase_requirements("3", root=tmp_root)
-            self.assertTrue(ok_p3_with_spec)
+            (tmp_root / "game.contract.json").write_text('{"contract_version":"1.0","tuning":{}}', encoding="utf-8")
+            # Missing phase-3 scenario must fail closed
+            ok_no_sc, issues_no_sc = verify_tool.check_phase_requirements("3", root=tmp_root)
+            self.assertFalse(ok_no_sc)
+            self.assertIn("Missing phase-3 scenario", issues_no_sc[0])
 
         with self.assertRaises(RuntimeError):
             qwen_review.check_outbound_prompt("Authorization: " + ("sk-sp-" + "A" * 24))

@@ -33,10 +33,25 @@ class TestPhase1Simulation(unittest.TestCase):
     def test_contract_json_matches_phase1_tuning(self) -> None:
         contract = json.loads((ROOT / "game.contract.json").read_text(encoding="utf-8"))
         self.assertEqual(contract["contract_version"], "1.0")
+        required_tuning_keys = {
+            "player_speed", "carry_capacity", "lantern_cost", "lantern_count_night1",
+            "pickup_radius", "interact_radius", "pulse_cost", "pulse_radius",
+            "night1_duration_s", "flames", "invuln_s", "hit_drop_ratio",
+            "pulse_stun_s", "pulse_push_m", "pulse_cooldown_s", "safe_radius",
+            "shade_speed", "shade_hit_radius", "fall_enabled", "score",
+        }
+        self.assertTrue(required_tuning_keys.issubset(contract["tuning"].keys()))
+        self.assertEqual(
+            set(contract["tuning"]["score"].keys()),
+            {"per_mote", "per_lantern", "per_stun", "per_second_left", "per_flame_left"},
+        )
         self.assertEqual(contract["tuning"], PHASE1_TUNING)
 
     def test_sim_module_is_decoupled_from_io_and_rendering(self) -> None:
-        forbidden_imports = {"http", "socket", "threading", "tkinter", "pygame", "pyglet", "os", "sys", "time"}
+        forbidden_imports = {
+            "http", "socket", "threading", "tkinter", "pygame", "pyglet",
+            "os", "sys", "time", "subprocess", "importlib", "json", "pathlib", "numpy",
+        }
         for rel in ("src/game/constants.py", "src/game/sim.py"):
             tree = ast.parse((ROOT / rel).read_text(encoding="utf-8"))
             for node in ast.walk(tree):
@@ -78,19 +93,23 @@ class TestPhase1Simulation(unittest.TestCase):
         sim = Simulation(seed=7, night=1, scenario=sc)
         # Setup must not award score or emit events
         self.assertEqual(sim.score, 0)
-        # First tick picks up 1 mote to reach capacity=10 (second mote remains) and rising-edge interact lights L1
+        # First tick (k=0) produces events with tick == 1
         evs = sim.step({"interact": True})
         names = [e["name"] for e in evs]
         self.assertIn("mote_picked", names)
         self.assertIn("deposit", names)
         self.assertIn("lantern_lit", names)
         self.assertIn("game_over", names)
+        for ev in evs:
+            self.assertEqual(ev["tick"], 1, f"Step k=0 event must record tick=1: {ev}")
         self.assertEqual(len(sim.motes), 1)
         self.assertEqual(sim.state, "won")
         # 10*10 + 100 + floor(99.983)*2 + 3*50 = 100 + 100 + 198 + 150 = 548
         self.assertEqual(sim.score, 548)
 
     def test_interact_held_does_not_retrigger_without_false_transition(self) -> None:
+        from src.game.sim import Mote
+
         sc = {
             "player": {"pos": [0.0, 0.0, 24.5], "carried": 5, "flames": 3},
             "random_motes": False,
@@ -99,45 +118,57 @@ class TestPhase1Simulation(unittest.TestCase):
         }
         sim = Simulation(seed=2, night=1, scenario=sc)
         ev1 = sim.step({"interact": True})
-        self.assertTrue(any(e["name"] == "deposit" for e in ev1))
+        self.assertTrue(any(e["name"] == "deposit" and e["tick"] == 1 for e in ev1))
         self.assertEqual(sim.player.carried, 0)
         # Pick up a mote on tick 2 while interact remains True: must NOT deposit
-        sim.motes.append(sim.motes[0] if sim.motes else type(sim.lanterns[0])("M9", [0.0, 0.0, 24.5]))  # noqa
-        from src.game.sim import Mote
-
         sim.motes = [Mote(id="M9", pos=[0.0, 0.0, 24.5])]
         ev2 = sim.step({"interact": True})
-        self.assertTrue(any(e["name"] == "mote_picked" for e in ev2))
+        self.assertTrue(any(e["name"] == "mote_picked" and e["tick"] == 2 for e in ev2))
         self.assertFalse(any(e["name"] == "deposit" for e in ev2))
-        # Release then press again -> deposits
+        # Release then press again -> deposits on tick 4
         sim.step({"interact": False})
         ev4 = sim.step({"interact": True})
-        self.assertTrue(any(e["name"] == "deposit" for e in ev4))
+        self.assertTrue(any(e["name"] == "deposit" and e["tick"] == 4 for e in ev4))
 
     def test_pulse_stuns_pushes_and_respects_cooldown_and_cost(self) -> None:
         sc = {
-            "player": {"pos": [0.0, 0.0, 0.0], "carried": 4, "flames": 3},
+            "player": {"pos": [0.0, 0.0, 0.0], "carried": 7, "flames": 3},
             "random_motes": False,
             "random_shades": False,
-            "shades": [{"id": "S1", "pos": [3.0, 0.0, 0.0]}],
+            "shades": [
+                {"id": "S1", "pos": [5.0, 0.0, 0.0]},
+                {"id": "S2", "pos": [5.05, 0.0, 0.0]},
+            ],
         }
         sim = Simulation(seed=3, night=1, scenario=sc)
         evs = sim.step({"pulse": True})
         pulse_ev = [e for e in evs if e["name"] == "pulse"]
         self.assertEqual(len(pulse_ev), 1)
+        self.assertEqual(pulse_ev[0]["tick"], 1)
+        # S1 at exactly 5.0 m is hit (<= r); S2 at 5.05 m is outside
         self.assertEqual(pulse_ev[0]["data"]["stunned_ids"], ["S1"])
-        self.assertEqual(sim.player.carried, 1)
+        self.assertEqual(sim.player.carried, 4)
         self.assertEqual(sim.score, 5)
         self.assertEqual(sim.shades[0].state, "stunned")
 
         # Complete push over 15 ticks (1 already ran -> 14 more)
         for _ in range(14):
             sim.step({"pulse": False})
-        self.assertGreater(sim.shades[0].pos[0], 6.5)
+        self.assertGreater(sim.shades[0].pos[0], 8.5)
 
-        # Pressing pulse while on cooldown or < pulse_cost does nothing
+        # Still on cooldown even though carried (4) >= pulse_cost (3) -> must NOT fire
         evs_cd = sim.step({"pulse": True})
         self.assertFalse(any(e["name"] == "pulse" for e in evs_cd))
+        sim.step({"pulse": False})
+
+        # Clear S2 so it does not hit player during the 3s cooldown wait, then verify pulse re-fires cleanly
+        sim.shades = [sim.shades[0]]
+        sim.player.carried = 4
+        for _ in range(165):
+            sim.step({"pulse": False})
+        evs_refire = sim.step({"pulse": True})
+        self.assertTrue(any(e["name"] == "pulse" for e in evs_refire))
+        self.assertEqual(sim.player.carried, 1)
 
     def test_shade_hit_drops_motes_grants_invuln_and_safe_radius_blocks_shades(self) -> None:
         sc = {
@@ -247,36 +278,62 @@ class TestPhase1Simulation(unittest.TestCase):
             self.assertEqual(raw1, raw2, "Headless output must be byte-identical across runs")
 
             lines = [json.loads(line) for line in raw1.splitlines() if line.strip()]
-            self.assertEqual(lines[0]["type"], "snapshot")
-            self.assertEqual(lines[0]["tick"], 0)
+            snaps = [r for r in lines if r["type"] == "snapshot"]
+            self.assertEqual([s["tick"] for s in snaps], list(range(0, 361, 30)))
+            self.assertAlmostEqual(snaps[2]["time_left_s"], 300.0 - 60 / 60.0, places=3)
+            self.assertEqual(snaps[0]["motes_active"], len(snaps[0]["motes"]))
             self.assertEqual(lines[-1]["type"], "end")
             self.assertEqual(lines[-1]["ticks"], 360)
 
-            # Malformed inputs (non-increasing ticks) must exit 2
+            # Default --snapshot-every is 10, --ticks 0 emits tick 0 + end, early-stop on win works
+            win_out = tmp_dir / "win.jsonl"
+            win_proc = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "src" / "headless.py"),
+                    "--seed", "42", "--night", "1",
+                    "--scenario", str(ROOT / "tests" / "scenarios" / "p1_win_night1.json"),
+                    "--inputs", str(ROOT / "tests" / "scenarios" / "p1_win_inputs.json"),
+                    "--ticks", "200",
+                    "--out", str(win_out),
+                ],
+                cwd=ROOT, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+            )
+            self.assertEqual(win_proc.returncode, 0, win_proc.stderr)
+            win_lines = [json.loads(ln) for ln in win_out.read_text(encoding="utf-8").splitlines()]
+            win_snaps = [r["tick"] for r in win_lines if r["type"] == "snapshot"]
+            self.assertEqual(win_snaps, [0, 10, 20])
+            self.assertEqual(win_lines[-1]["state"], "won")
+            self.assertLess(win_lines[-1]["ticks"], 200)
+
+            zero_records = run_headless(seed=1, night=1, ticks=0)
+            self.assertEqual([r["type"] for r in zero_records], ["snapshot", "end"])
+            self.assertEqual(zero_records[-1]["ticks"], 0)
+
+            # Malformed inputs AND malformed scenario must exit 2
             bad_inputs = tmp_dir / "bad_inputs.json"
             bad_inputs.write_text(json.dumps({"frames": [{"tick": 5}, {"tick": 5}]}), encoding="utf-8")
             bad_proc = subprocess.run(
                 [
-                    sys.executable,
-                    str(ROOT / "src" / "headless.py"),
-                    "--seed",
-                    "1",
-                    "--night",
-                    "1",
-                    "--inputs",
-                    str(bad_inputs),
-                    "--ticks",
-                    "10",
-                    "--out",
-                    str(tmp_dir / "unused.jsonl"),
+                    sys.executable, str(ROOT / "src" / "headless.py"),
+                    "--seed", "1", "--night", "1", "--inputs", str(bad_inputs),
+                    "--ticks", "10", "--out", str(tmp_dir / "unused.jsonl"),
                 ],
-                cwd=ROOT,
-                env=env,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
+                cwd=ROOT, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
             )
             self.assertEqual(bad_proc.returncode, 2)
+
+            bad_scenario = tmp_dir / "bad_scenario.json"
+            bad_scenario.write_text('{"player": "not-an-object"}', encoding="utf-8")
+            bad_sc_proc = subprocess.run(
+                [
+                    sys.executable, str(ROOT / "src" / "headless.py"),
+                    "--seed", "1", "--night", "1", "--scenario", str(bad_scenario),
+                    "--ticks", "10", "--out", str(tmp_dir / "unused2.jsonl"),
+                ],
+                cwd=ROOT, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+            )
+            self.assertEqual(bad_sc_proc.returncode, 2)
 
     def test_headless_full_night_performance_budget(self) -> None:
         t0 = time.monotonic()

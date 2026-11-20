@@ -21,6 +21,7 @@ Record every ambiguity in the phase specifications, the chosen concrete values/r
   - Ink Shadows: `shade_speed = 4.0` m/s, `shade_hit_radius = 1.0` m, detect at `12.0` m, drop chase at `18.0` m; 2 spawn at tick `300` (5 s), then 1 every `480` ticks (8 s), max 6 active, on a 37 m perimeter ring ≥ 15 m from player.
   - Health & Time: `flames = 3`, `invuln_s = 1.5` s (`90` ticks), `hit_drop_ratio = 0.5` (`floor(carried * 0.5)` dropped around player with `480`-tick TTL), `night1_duration_s = 300.0` s (`18000` ticks).
   - Score: `per_mote = 10` (per mote deposited), `per_lantern = 100`, `per_stun = 5`, `per_second_left = 2`, `per_flame_left = 50`.
+  - Contract nuances recorded: (1) mote pickup & shade touch include `abs(dy) <= 1.5` m vertical check so high jumps over entities behave naturally; (2) newly spawned/dropped motes have `ready_tick = sim_tick + 1` so they cannot be picked on the same tick they spawn; (3) if `--ticks N` finishes while still playing, `end.state` reports `"playing"`; (4) `scenario.time_left_s` (from Test Contract v1.0 §D) overrides initial timer when specified.
 - **Creative Additions (`Sáng tạo của tôi`):** Visual/audio polish only in `web/` (procedural Web Audio fairy-tale chimes/ambience, glowing firefly trails, conical hat *nón lá* with dangling warm lantern, progressive sky/fog brightening as lanterns light). Zero extra gameplay entities that could affect headless contract output.
 
 ## Phase 2 (Ticket-02)
