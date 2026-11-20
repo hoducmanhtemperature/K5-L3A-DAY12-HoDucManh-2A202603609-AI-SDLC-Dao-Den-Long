@@ -36,6 +36,7 @@ class JumpPad:
 class NightConfig:
     night: int
     name: str
+    start_pos: tuple[float, float, float]
     duration_s: float
     shade_speed: float
     shade_spawn_interval_ticks: int
@@ -59,6 +60,7 @@ def _unit_dir_xz(src: tuple[float, float, float], dst: tuple[float, float, float
 NIGHT1_CONFIG = NightConfig(
     night=1,
     name="Đêm 1 — Đảo Bến",
+    start_pos=(0.0, 0.0, 0.0),
     duration_s=300.0,
     shade_speed=4.0,
     shade_spawn_interval_ticks=480,
@@ -81,6 +83,7 @@ NIGHT1_CONFIG = NightConfig(
 NIGHT2_CONFIG = NightConfig(
     night=2,
     name="Đêm 2 — Đảo Cau",
+    start_pos=(0.0, 0.0, 0.0),
     duration_s=330.0,
     shade_speed=4.0,
     shade_spawn_interval_ticks=420,
@@ -131,6 +134,7 @@ _N3_T2_MOTES = _ring(5.0, 4, 45.0, y=6.0)
 NIGHT3_CONFIG = NightConfig(
     night=3,
     name="Đêm 3 — Đảo Chuông",
+    start_pos=(0.0, 0.0, -15.0),
     duration_s=360.0,
     shade_speed=4.5,
     shade_spawn_interval_ticks=360,

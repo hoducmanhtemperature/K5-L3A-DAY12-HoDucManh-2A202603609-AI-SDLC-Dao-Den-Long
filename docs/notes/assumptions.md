@@ -33,6 +33,7 @@ Record every ambiguity in the phase specifications, the chosen concrete values/r
   - **Night 3 ramps:** Straight ramps of width `3 m` along radial angles `30°` and `150°` linearly interpolate ground height from `Y = 0` at `r = 30 m` to `Y = 3` at `r = 24 m`.
   - **Pause semantics:** Pressing `pause` (`false -> true`) toggles paused state (`paused` / `resumed` events). While paused, `tick` advances, `sim_tick` and all timers/physics/spawns freeze, and snapshot reports `state: "paused"`.
   - **Night 3 Wind:** Triggers every `1800` ticks (`30 s`) for `300` ticks (`5 s`) in a deterministic RNG angle `dir_deg`, pushing player `2.0 m/s` horizontally (disabled when `scenario.wind_enabled == false`).
+  - **TA Clarifications Incorporated:** Scheduled Shades enter `spawning` for 60 ticks (`1.0 s`, no damage) before `wander` (scenario Shades start in `wander`); Night 2 starts at `(0, 0, 0)` and Night 3 starts/respawns at `(0, 0, -15)` facing `+Z`; `night_start` event is emitted on `tick == 1`; `player.invuln` in snapshots is boolean.
   - **Phase 1 Test Updates:** `test_contract_json_matches_phase1_tuning` updated to verify Contract v1.1 tuning keys (superset of v1.0); `test_pulse_stuns_pushes_and_respects_cooldown_and_cost` updated shade Y from `0.0` to `0.8` to match Ticket-02's explicit 3D pulse origin (`feet + 0.8 m`); `test_fall_off_island_deducts_flame_and_respawns_or_loses` updated to also assert Contract v1.1's `lost` field.
 
 ## Phase 3 (Ticket-03)

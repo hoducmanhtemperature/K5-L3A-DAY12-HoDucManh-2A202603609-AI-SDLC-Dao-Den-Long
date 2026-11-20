@@ -1,12 +1,11 @@
 === Verification Report (phase=2) ===
-Timestamp (UTC): 2026-11-20T09:39:11.024524+00:00
-Git HEAD: 36894a3
-Git working tree: clean
+Timestamp (UTC): 2026-11-20T09:41:10.196603+00:00
+Git HEAD: 44c7944
+Git working tree: dirty (4 uncommitted path(s))
 Git core.hooksPath: .githooks
 Python: 3.13.14
 Phase spec check: SPEC_PRESENT
 Secret scan: PASS
-Clean tree check: PASS
 
 --- Unit Tests (python3 -m unittest discover -s tests -v) ---
 test_env_ignored_and_hook_executable_in_index (test_harness_smoke.TestHarnessSmoke.test_env_ignored_and_hook_executable_in_index) ... ok
@@ -37,9 +36,10 @@ test_night2_jump_pad_launches_across_to_island_b (test_phase2_features.TestPhase
 test_night3_full_21600_ticks_performance_and_determinism (test_phase2_features.TestPhase2Features.test_night3_full_21600_ticks_performance_and_determinism) ... ok
 test_night3_ramps_jump_pad_bell_tower_and_wind (test_phase2_features.TestPhase2Features.test_night3_ramps_jump_pad_bell_tower_and_wind) ... ok
 test_pause_freezes_sim_tick_and_time_then_resumes (test_phase2_features.TestPhase2Features.test_pause_freezes_sim_tick_and_time_then_resumes) ... ok
+test_scheduled_shade_spawns_in_spawning_state_for_60_ticks (test_phase2_features.TestPhase2Features.test_scheduled_shade_spawns_in_spawning_state_for_60_ticks) ... ok
 
 ----------------------------------------------------------------------
-Ran 27 tests in 6.567s
+Ran 28 tests in 4.075s
 
 OK
 

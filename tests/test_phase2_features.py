@@ -184,12 +184,27 @@ class TestPhase2Features(unittest.TestCase):
             sim_t.step({"move": [-1.0, 0.0]})
         self.assertGreaterEqual(math.hypot(sim_t.player.pos[0], sim_t.player.pos[2]), 1.99)
 
-        # 4. Night 3 Strong Wind triggers at tick 1800 for 300 ticks
+        # 4. Night 3 Strong Wind triggers at tick 1800 for 300 ticks + start pos is (0, 0, -15)
         sc_wind = {"random_motes": False, "random_shades": False, "random_drifters": False, "wind_enabled": True}
         sim_w = Simulation(seed=42, night=3, scenario=sc_wind)
-        for _ in range(1800):
+        self.assertEqual(sim_w.player.pos, [0.0, 0.0, -15.0])
+        ev1 = sim_w.step()
+        self.assertTrue(any(e["name"] == "night_start" and e["tick"] == 1 and e["data"] == {"night": 3} for e in ev1))
+        for _ in range(1799):
             sim_w.step()
         self.assertTrue(sim_w.snapshot()["wind"]["active"])
+
+    def test_scheduled_shade_spawns_in_spawning_state_for_60_ticks(self) -> None:
+        sim = Simulation(seed=10, night=1, scenario={"random_motes": False, "random_shades": True})
+        for _ in range(300):
+            sim.step()
+        self.assertEqual(len(sim.shades), 2)
+        self.assertTrue(all(s.state == "spawning" for s in sim.shades))
+        for _ in range(59):
+            sim.step()
+        self.assertTrue(all(s.state == "spawning" for s in sim.shades))
+        sim.step()
+        self.assertTrue(all(s.state != "spawning" for s in sim.shades))
 
     def test_night3_full_21600_ticks_performance_and_determinism(self) -> None:
         t0 = time.monotonic()

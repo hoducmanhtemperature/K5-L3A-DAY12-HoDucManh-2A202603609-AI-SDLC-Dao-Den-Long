@@ -362,7 +362,7 @@ class Simulation:
         self.score = 0
         self.time_left_ticks = int(round(self.cfg.duration_s * TICK_RATE))
 
-        self.player = Player(flames=int(self.tuning["flames"]))
+        self.player = Player(pos=list(self.cfg.start_pos), flames=int(self.tuning["flames"]))
         self.lanterns: list[Lantern] = [
             Lantern(id=str(item["id"]), pos=list(item["pos"])) for item in self.cfg.lanterns
         ]
@@ -644,6 +644,8 @@ class Simulation:
 
         self.tick += 1
         events: list[dict[str, Any]] = []
+        if self.tick == 1:
+            self._emit(events, "night_start", {"night": self.night})
 
         pause_edge = bool(self._input_state["pause"]) and not self._prev_buttons["pause"]
         self._prev_buttons["pause"] = bool(self._input_state["pause"])
@@ -764,7 +766,7 @@ class Simulation:
         if p.respawn_ticks > 0:
             p.respawn_ticks -= 1
             if p.respawn_ticks == 0:
-                p.pos = [0.0, 0.0, 0.0]
+                p.pos = list(self.cfg.start_pos)
                 p.vel = [0.0, 0.0, 0.0]
                 p.grounded = True
                 p.launched = False
@@ -1177,7 +1179,8 @@ class Simulation:
                 sh = Shade(
                     id=self._next_shade_id(),
                     pos=list(pt),
-                    state="wander",
+                    state="spawning",
+                    spawning_ticks=60,
                     wander_angle=self.rng.uniform(0.0, math.tau),
                 )
                 self.shades.append(sh)
