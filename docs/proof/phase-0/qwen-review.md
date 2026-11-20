@@ -1,46 +1,49 @@
 # Qwen4-Max-Preview Independent Review (phase=0)
-- Timestamp (UTC): 2026-11-20T09:01:10.627631+00:00
+- Timestamp (UTC): 2026-11-20T09:06:11.966442+00:00
 - Audited diff base: `9818fc1`
 - Model: `qwen4-max-preview`
-- Token usage: `{"prompt_tokens": 22331, "total_tokens": 29685, "completion_tokens": 7354, "prompt_tokens_details": {"cached_tokens": 0, "text_tokens": 22331}, "completion_tokens_details": {"reasoning_tokens": 5883}}`
+- Token usage: `{"prompt_tokens": 22339, "total_tokens": 29341, "completion_tokens": 7002, "prompt_tokens_details": {"cached_tokens": 0, "text_tokens": 22339}, "completion_tokens_details": {"reasoning_tokens": 5512}}`
 
-## Scope check (CP0)
+## Scope / Requirements (CP0)
 
-CP0 asks for: repo ready, engine/language chosen, a hello 3D **or headless** run, notes scaffolding, and a clean-clone re-run. All are present in some form. No game logic exists yet, so there is no sim/render coupling or Test Contract to violate — good, and `assumptions.md` correctly quarantines `hello_headless.py` output (which contains `platform.python_version()`) from the future deterministic contract.
+CP0 asks for a ready repo, a hello 3D **or** headless run, a notes location, and a clean-clone check. All four are present. No Test Contract exists yet, so no contract mismatch is possible — but two things overclaim:
 
-Concern: the diff is ~1,400 lines of harness for a checkpoint budgeted at ~10 minutes, and ten prior review rounds were spent hardening the *scanner*, not the product. That is scope inflation relative to CP0, and it has produced the problems below.
+- `tools/hello_3d.html` is named "3D" and contains an unused `<canvas>` plus `window.__CP0_READY__ = true`. No WebGL context, no renderer, no Three.js. The smoke test asserts only `HTTP 200` + substring presence. This proves *static file serving*, not 3D readiness. Fine under CP0's "or headless" clause, but rename it or stop treating it as 3D evidence — right now `http_static_status: 200 → status: "ready"` is a confidence-inflating tautology.
+- CP0 is budgeted ~10 minutes. You built a 289-line gate, 256-line reviewer, CI, 287-line test suite and burned 12 reviewer runs (~250k cumulative tokens) before Phase 1. `ai-log.md` bragging about "AGENTS.md under 35 lines to minimize tokens" while doing this is inconsistent. Token efficiency is an explicit CP5 grading item; account for this honestly in the retro.
 
-## Evidence integrity (material)
+## Evidence integrity (most substantive findings)
 
-1. **`ai-log.md` claims tests that do not exist.** Row 9 states it added tests for "`.env.example` key leak". The only `.env.example` assertions in `tests/test_harness_smoke.py` are the *opposite*: that the placeholder yields **no** hits and that the filename is **not** forbidden. There is no test that a real key placed in `.env.example` is caught. Similarly, the comment `# Red test, skipped test, and 0-test suite fail closed` is followed by red + skipped cases only — the `Ran 0 tests` guard in `run_unit_tests()` is never exercised. The lab treats overstated evidence as a violation; these are two concrete instances.
-2. **CP0-4 proof is stale.** `clean-clone.log` records `Git HEAD: 33114b2`; the gate log records `c8631ae`. The matrix marks CP0-4 PASS against a commit that is not the audited tree. Re-run the clean clone at the final HEAD.
-3. **CP0-2 is self-admittedly "Pending final strict run"**, and `docs/proof/` is excluded from the review diff (`:!docs/proof/`). Only `verify.log` is injected as context; `qwen-review.md` and `clean-clone.log` are not. The one artifact class whose authenticity the reviewer must check is the one class hidden from the diff. Send at least a proof file inventory + hashes.
-4. **Token log vs. narrative mismatch:** 11 API calls in `token-log.jsonl`, 10 documented rounds in `ai-log.md`, and the round numbering jumps fifth → "Seventh". One review's finding is unrecorded.
+1. **Proof HEADs disagree.** `verify.log` → `23c0828`; `clean-clone.log` → `721da96`. The clean-clone proof therefore does **not** cover the audited commit. Re-run the clean clone against the final HEAD, or state explicitly which commit each artifact attests to.
+2. **`docs/proof/` is excluded from `get_git_diff()`** (`path_filter = ["--", ".", ":!docs/proof/"]`). The only artifacts that constitute "real evidence" are structurally invisible to the independent reviewer, except `verify.log` which is injected as trusted context. You have built a review pipeline that cannot audit its own proof. At minimum, hash-list the proof directory into the prompt.
+3. **`qwen-review.md` is overwritten every run.** `ai-log.md` claims 11 BLOCKER reviews; none of them survive on disk. The lab explicitly grades "AI sai ở đâu, phát hiện thế nào" — hand-transcribed summaries in a markdown table are not raw evidence. Append per-run files (`qwen-review-01.md`, …) or fail-closed on overwrite.
+4. **Untracked files are reviewed by filename only.** `get_git_diff` appends `git ls-files --others` names, never contents. New uncommitted source can pass strict review unseen. Not triggered here (everything is committed), but it is a live fail-open path for Phase 1+.
 
-## Fail-open / weak gates
+## Security / scanner gaps
 
-5. **`--allow-empty` contradicts its own help text.** Help says "only with `--prompt`", but nothing enforces it, and with `--prompt` the diff is never fetched — so the flag's *only* reachable effect is to let an empty diff through and log it as `purpose: "diff-review"`. That is exactly the vacuous-review path the ai-log claims was closed. Either delete the flag or hard-reject it outside `--prompt`.
-6. **`Phase gate: PASS` for N>0 is a file-existence check.** `check_phase_requirements()` only stats `docs/specs/phase-N.md`. Printing `PASS` for that in Phases 1–4 is a tautological gate wearing a compliance label. Rename to `spec present` and make the real gate assert requirement→test coverage from the matrix.
-7. **`is_strict_pass()` only inspects the last line.** A completion containing `VERDICT: BLOCKER - …` mid-text and `VERDICT: PASS` at the end passes. Reject any BLOCKER token anywhere.
-8. **Allowlisted-binary ASCII scan is trivially bypassable.** `_scan_raw_blob` decodes latin-1 and regex-matches; UTF-16, base64, or any compressed payload inside a `.png`/`.glb` walks through. Fine as a heuristic, but do not describe it as "keys inside assets are caught". Also `.woff`, `.ico`, `.fbx`, `.blend` are not allowlisted and will hard-fail Phase 1–4 assets; and a ~99 MB `demo.mp4` (CP5) will be latin-1-decoded and run through 8 regexes — expect a memory/latency problem.
+No secrets in the diff; `.env.example` is a placeholder; `scan_text_for_secrets` returns the *pattern*, not the match, so outbound prompts and `verify.log` don't leak values. `check_outbound_prompt` covering the injected proof log is a genuinely good catch. Remaining holes:
+
+- **No history scan.** `check_secrets` reads index + worktree + staged only. A key committed at any earlier commit and later removed passes forever. CP5 requires "lịch sử git" clean — add a `git log -p` / `git rev-list --objects` scan at least once before submission.
+- **`.gitignore` blanket-ignores `dist/` and `build/`.** Those are exactly where the Phase 4 static web release will live. Ignored ⇒ absent from `ls-files --others --exclude-standard` ⇒ never scanned ⇒ a key baked into a bundle is invisible to gate and hook. Also means the release artifact may never get committed. Decide the release path now.
+- **Binary detection is `b"\x00" in raw` only.** A UTF-16/UTF-32 text file with no nulls in the scanned region, or a key split across a line boundary in the staged `-U0` diff, evades the regexes. Low likelihood, but the "fail-closed" claim in `assumptions.md` is stronger than the implementation.
+- `MAX_BINARY_ASSET_BYTES = 100_000_00` + `raw.decode("latin-1")` + 8 regexes means a ~100 MB `demo.mp4` (CP5) will allocate a ~100 MB str and regex-scan it. Chunk it.
+- CI selects the phase by *spec-file presence*. Deleting `docs/specs/phase-3.md` silently downgrades the gate to phase 2. Derive the phase from the tag/branch instead.
 
 ## Test quality
 
-9. The hook's green control commits a temp repo whose only test is `assertEqual(1 + 1, 2)`. Acceptable as a fixture, but it proves the gate *executes*, not that it evaluates anything; the red-test case is what carries the weight. Keep both, and don't cite the green case as coverage.
-10. `test_env_ignored_and_hook_executable_in_index` runs against the real `ROOT` index — it fails outside a git checkout (tarball/CI artifact run). Minor non-hermeticity.
-11. `test_hello_headless_and_local_http_serve` binds a real socket with a 5 s timeout; it is the only network-dependent test and will be the first flake in a restricted runner. Also, `hello_3d.html` is an empty `<canvas>` with a JS flag — HTTP 200 on it verifies static serving, **not** any 3D/WebGL capability. The matrix wording is honest about this; do not let it later be cited as "3D environment verified".
+Better than typical — the fail-closed assertions (staged-blob-vs-sanitized-worktree, `.env.EXAMPLE` casing, `Ran 0 tests`, skipped tests, non-ASCII `khóa.pem`, oversized diff, invalid base ref) are real and would catch regressions. Gaps:
 
-## Forward risk
+- No test that a secret in an **already-committed** file is caught (only staged/worktree). That is the CP5 requirement.
+- `run_unit_tests` uses `re.search(r"Ran (\d+) test")` on combined stdout — first match wins. A test printing `Ran 5 tests` masks a genuine 0-test discovery. Anchor to the summary line (`^Ran \d+ tests? in `).
+- No guard against assertion-free tests. `assertEqual(1+1, 2)` in the temp fixture is fine; nothing stops the same pattern appearing in `tests/` later.
+- `test_secret_scanner_boundaries_and_filenames` negative case `lantern_key = 'great_lantern_01'` is 16 chars — below the 20-char threshold, so it passes for the wrong reason. It does not demonstrate a game-identifier allowlist exists. Use a ≥20-char identifier to make that assertion meaningful.
+- `check_outbound_prompt` is tested only with an `Authorization:` string; no test that `ENV` content or a `--files ENV` argument is refused end-to-end.
 
-12. `assumptions.md` commits to browser Three.js with "no external CDN dependency", but nothing is vendored and there is no fetch step. The CP4 "clean clone, ≤3 commands" requirement will fail unless `three.module.js` is committed or a documented offline step exists. Decide now, in writing.
+## Determinism / coupling
 
-## Required before tagging phase-0
+Nothing to fault yet — no simulation exists. `hello_headless.py` embeds `platform.python_version()` and is correctly quarantined in `tools/` and documented as non-contract. Keep that separation: the HTTP-server-inside-the-headless-check pattern must not migrate into Phase 1's contract runner.
 
-- Correct rows in `ai-log.md` (remove or actually implement the `.env.example`-leak and 0-test assertions); fix the misleading test comment.
-- Add the two missing fail-closed tests; add a `.env.example`-with-real-key case.
-- Remove/enforce `--allow-empty`; relabel the N>0 phase gate.
-- Re-run clean clone at the final HEAD; update CP0-2/CP0-4 rows with the actual artifacts.
+## Required before Phase 1
 
-Secret hygiene itself is sound: no key material in the diff, `ENV`/`.env` ignored, index-blob scanning with staged-vs-worktree precedence is correctly tested, `.githooks/pre-commit` is mode `100755`, CI is least-privilege. That part I accept.
+Reconcile the two proof HEADs, stop overwriting review artifacts, and add a history scan + a decision on the ignored release directory. None of these block CP0 sign-off; all of them will block later checkpoints if deferred.
 
-VERDICT: BLOCKER - ai-log/tests claim guards that are not tested (.env.example key leak, 0-test suite), CP0-4 clean-clone proof is from a stale commit, and --allow-empty re-opens the vacuous-review path.
+VERDICT: PASS
