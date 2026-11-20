@@ -1,7 +1,7 @@
 === Verification Report (phase=4) ===
-Timestamp (UTC): 2026-11-20T10:19:27.711841+00:00
-Git HEAD: 8515045
-Git working tree: dirty (9 uncommitted path(s))
+Timestamp (UTC): 2026-11-20T10:26:19.961756+00:00
+Git HEAD: 5d42bbe
+Git working tree: clean
 Git core.hooksPath: .githooks
 Python: 3.13.14
 Phase spec check: SPEC_PRESENT
@@ -51,7 +51,7 @@ test_soak_cli_runs_consecutive_nights_without_crash_or_mem_leak (test_phase4_rel
 test_web_accessibility_and_p4_night3_dawn_scenario (test_phase4_release.TestPhase4Release.test_web_accessibility_and_p4_night3_dawn_scenario) ... ok
 
 ----------------------------------------------------------------------
-Ran 40 tests in 5.565s
+Ran 40 tests in 5.650s
 
 OK
 
