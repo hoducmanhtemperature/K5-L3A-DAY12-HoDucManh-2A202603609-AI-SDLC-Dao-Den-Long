@@ -146,10 +146,13 @@ class LanternHTTPHandler(http.server.SimpleHTTPRequestHandler):
                         if not isinstance(msg, dict):
                             continue
                         with lock:
-                            if msg.get("cmd") == "restart":
+                            cmd = msg.get("cmd")
+                            if cmd in ("restart", "start"):
                                 raw_seed = msg.get("seed", sim.seed + 1)
                                 seed = raw_seed if isinstance(raw_seed, int) and not isinstance(raw_seed, bool) else sim.seed + 1
-                                sim = Simulation(seed=seed, night=1)
+                                raw_night = msg.get("night", sim.night)
+                                night = raw_night if raw_night in (1, 2, 3) else sim.night
+                                sim = Simulation(seed=seed, night=night)
                                 latest_input.clear()
                             else:
                                 mv = msg.get("move")
@@ -165,7 +168,7 @@ class LanternHTTPHandler(http.server.SimpleHTTPRequestHandler):
                                 yaw = msg.get("cam_yaw_deg")
                                 if isinstance(yaw, (int, float)) and not isinstance(yaw, bool):
                                     latest_input["cam_yaw_deg"] = float(yaw)
-                                for k in ("jump", "interact", "pulse"):
+                                for k in ("jump", "interact", "pulse", "dash", "pause"):
                                     if isinstance(msg.get(k), bool):
                                         latest_input[k] = msg[k]
             finally:
@@ -186,7 +189,7 @@ class LanternHTTPHandler(http.server.SimpleHTTPRequestHandler):
                     next_tick_time = now + DT
 
                 with lock:
-                    evs = sim.step(latest_input if sim.state == "playing" else None)
+                    evs = sim.step(latest_input if sim.state in ("playing", "paused") else None)
                     payload_obj = {
                         "state": sim.render_state(),
                         "events": evs,

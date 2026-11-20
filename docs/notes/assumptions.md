@@ -25,7 +25,15 @@ Record every ambiguity in the phase specifications, the chosen concrete values/r
 - **Creative Additions (`Sáng tạo của tôi`):** Visual/audio polish only in `web/` (procedural Web Audio fairy-tale chimes/ambience, glowing firefly trails, conical hat *nón lá* with dangling warm lantern, progressive sky/fog brightening as lanterns light). Zero extra gameplay entities that could affect headless contract output.
 
 ## Phase 2 (Ticket-02)
-- *(Pending Ticket-02)*
+- **Contract v1.1 Rule Updates (overriding Phase 1 v1.0):**
+  - **Vertical check re-enabled by Ticket-02 Part 1:** Mote pickup & Shade touch now explicitly require `dist_xz <= 1.0` AND `abs(dy) <= 1.5` (replacing Phase 1's pure-XZ rule so multi-tier Night 3 behaves accurately). Phase 1 tests updated/kept consistent with this explicit Ticket-02 rule.
+  - **Pulse 3D distance:** Ticket-02 Part 1 specifies Pulse center = `player.feet + 0.8 m` with 3D distance `<= 5.0 m` to Shade center (`shade.pos`). For Shades on ground (`y = 0` or `y = 1.0`), `0.8` vs `1.0` has `dy = 0.2`, matching 3D radius cleanly.
+  - **Fall `player_hit` event:** Emits both `"dropped": lost` (Phase 1 compatibility) and `"lost": lost` (Contract v1.1 requirement).
+  - **Spawned entities ready next tick:** Ticket-02 Step 10 explicitly states newly spawned motes, Shades, and Drifters only interact starting the next tick (naturally guaranteed because spawns occur in Step 10 after pickup/touch).
+  - **Night 3 ramps:** Straight ramps of width `3 m` along radial angles `30°` and `150°` linearly interpolate ground height from `Y = 0` at `r = 30 m` to `Y = 3` at `r = 24 m`.
+  - **Pause semantics:** Pressing `pause` (`false -> true`) toggles paused state (`paused` / `resumed` events). While paused, `tick` advances, `sim_tick` and all timers/physics/spawns freeze, and snapshot reports `state: "paused"`.
+  - **Night 3 Wind:** Triggers every `1800` ticks (`30 s`) for `300` ticks (`5 s`) in a deterministic RNG angle `dir_deg`, pushing player `2.0 m/s` horizontally (disabled when `scenario.wind_enabled == false`).
+  - **Phase 1 Test Updates:** `test_contract_json_matches_phase1_tuning` updated to verify Contract v1.1 tuning keys (superset of v1.0); `test_pulse_stuns_pushes_and_respects_cooldown_and_cost` updated shade Y from `0.0` to `0.8` to match Ticket-02's explicit 3D pulse origin (`feet + 0.8 m`); `test_fall_off_island_deducts_flame_and_respawns_or_loses` updated to also assert Contract v1.1's `lost` field.
 
 ## Phase 3 (Ticket-03)
 - *(Pending Ticket-03)*

@@ -115,7 +115,7 @@ git config core.hooksPath .githooks
 
 ---
 
-## Chơi game & Kiểm thử (Phase 1 — Đêm 1: Đảo Bến)
+## Chơi game & Kiểm thử (Phase 2 — Ba Hòn Đảo · Contract v1.1)
 
 Yêu cầu: **Python ≥ 3.10** (không cần cài thư viện ngoài; Three.js `r128` MIT đã được đóng gói sẵn trong `web/vendor/three.min.js`).
 
@@ -128,22 +128,21 @@ Mở trình duyệt tại địa chỉ in ra (mặc định `http://127.0.0.1:80
 
 ### 2. Điều khiển
 - **Di chuyển:** `WASD` hoặc phím mũi tên
-- **Xoay camera:** Kéo chuột trái hoặc `J` / `L`
+- **Xoay camera:** Kéo chuột trái hoặc `J` / `L` (độ nhạy chuột & âm lượng lưu tự động trong `localStorage`)
 - **Nhảy:** `Space`
-- **Nạp ánh sáng vào Đèn Lồng Lớn:** `E` (khi đứng trong bán kính `2.0 m`)
-- **Tỏa Sáng (xua & làm choáng Bóng Mực):** `Q` hoặc `F` (tốn `3` đom đóm, hồi chiêu `3 s`)
-- **Chơi lại sau khi thắng/thua:** `R` hoặc bấm nút **Chơi lại**
+- **Lướt (Dash):** `Shift` (`14 m/s`, `0.2 s`, hồi `1.5 s`, giữ độ cao trên không, hồi `0 s` khi có Bùa Gió)
+- **Nạp ánh sáng vào Đèn Lồng Lớn:** `E` (bán kính `2.0 m`)
+- **Tỏa Sáng:** `Q` hoặc `F` (tốn `3` đom đóm, bán kính 3D `5 m`, hồi `3 s`)
+- **Tạm dừng & Cài đặt:** `Esc` hoặc `P`
 
-### 3. Tính điểm (`game.contract.json` v1.0)
-- `+10` mỗi đom đóm nạp vào Đèn Lồng Lớn
-- `+100` mỗi Đèn Lồng Lớn được thắp sáng (10 đom đóm/đèn)
-- `+5` mỗi Bóng Mực trúng Tỏa Sáng
-- Khi thắng (thắp đủ 5 đèn): `+ floor(giây còn lại) × 2 + Ngọn Lửa còn lại × 50`
+### 3. Chuỗi 3 Đêm & Tính điểm (`game.contract.json` v1.1)
+- **Đêm 1 — Đảo Bến** (5 đèn, 300s) → **Đêm 2 — Đảo Cau** (6 đèn, cầu tre, bục nhảy, Gió Lạc, Bùa Gió, 330s) → **Đêm 3 — Đảo Chuông** (7 đèn, 3 tầng, 2 dốc, tháp chuông, gió mạnh, 360s) → **Bình Minh**.
+- `+10`/đom đóm nạp · `+100`/đèn thắp · `+5`/Bóng Mực trúng Tỏa Sáng · thắng: `+ floor(giây còn lại) × 2 + Ngọn Lửa × 50`.
 
-### 4. Chạy Test & Chế độ Headless (Test Contract v1.0)
+### 4. Chạy Test & Chế độ Headless (Test Contract v1.1)
 ```bash
-python3 tools/verify.py --phase 1 --ci
-python3 src/headless.py --seed 42 --night 1 --scenario tests/scenarios/p1_win_night1.json --inputs tests/scenarios/p1_win_inputs.json --ticks 120 --out /tmp/p1.jsonl
+python3 tools/verify.py --phase 2 --ci
+python3 src/headless.py --seed 42 --night 2 --scenario tests/scenarios/p2_features_night2.json --inputs tests/scenarios/p2_features_inputs.json --ticks 120 --out /tmp/p2.jsonl
 ```
 
 ### 5. Sáng tạo của tôi

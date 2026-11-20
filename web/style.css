@@ -1,10 +1,12 @@
 :root {
   --sky: #0e1430;
-  --panel: rgba(21, 28, 61, 0.84);
+  --fog: #1b2350;
+  --panel: rgba(21, 28, 61, 0.86);
   --ink: #f5f1e6;
   --muted: #aeb3cc;
   --lantern: #ffb347;
   --core: #ffe9b0;
+  --gold: #f2c14e;
   --danger: #ff5a5f;
 }
 * { box-sizing: border-box; user-select: none; }
@@ -19,25 +21,32 @@ html, body {
   display: flex; flex-direction: column; justify-content: space-between;
   padding: 16px;
 }
-.hud-top, .hud-bottom {
-  display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;
-}
+.hud-top, .hud-bottom { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
 .hud-bottom { align-items: flex-end; }
+.hud-abilities { display: flex; gap: 10px; }
 .card {
-  background: var(--panel); border: 1px solid rgba(255, 233, 176, 0.22);
-  border-radius: 10px; padding: 10px 14px; min-width: 140px;
+  background: var(--panel); border: 1px solid rgba(242, 193, 78, 0.3);
+  border-radius: 10px; padding: 10px 14px; min-width: 130px;
   backdrop-filter: blur(6px);
 }
 .card.center { text-align: center; }
-.card.right { text-align: right; }
+.card.right { text-align: right; color: var(--gold); }
 .label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
 #timer { font-size: 24px; letter-spacing: 0.04em; color: var(--core); }
-#timer.warn { color: var(--danger); }
+#timer.warn { color: var(--danger); animation: blink 0.8s infinite; }
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+.wind-badge {
+  margin-top: 4px; font-size: 12px; font-weight: 700; color: #8fa3b8;
+}
+.charm {
+  background: #c8102e; color: #ffe9b0; border: 1px solid var(--gold);
+  border-radius: 999px; padding: 1px 7px; font-size: 11px; margin-left: 6px;
+}
 #flames { display: flex; gap: 8px; margin-top: 2px; }
 .flame {
   width: 18px; height: 22px; border-radius: 50% 50% 50% 50% / 65% 65% 35% 35%;
-  background: radial-gradient(circle at 50% 60%, #ffe9b0, #ff8c32);
-  box-shadow: 0 0 10px rgba(255, 179, 71, 0.8);
+  background: radial-gradient(circle at 50% 60%, #ffe9b0, #ffb347);
+  box-shadow: 0 0 10px rgba(255, 179, 71, 0.85);
 }
 .flame.off { background: #2c3354; box-shadow: none; opacity: 0.4; }
 .pips { display: flex; gap: 5px; margin-top: 4px; }
@@ -51,31 +60,39 @@ html, body {
   border: 1px solid var(--lantern); color: var(--core);
   padding: 8px 16px; border-radius: 999px; font-size: 14px;
 }
+.arrow {
+  position: fixed; font-size: 26px; color: var(--lantern);
+  text-shadow: 0 0 10px rgba(255, 179, 71, 0.9);
+  transform-origin: center;
+}
 .hidden { display: none !important; }
 .overlay {
-  position: fixed; inset: 0; background: rgba(8, 11, 28, 0.82);
+  position: fixed; inset: 0; background: rgba(8, 11, 28, 0.84);
   display: flex; align-items: center; justify-content: center; padding: 20px;
 }
 .modal {
-  max-width: 480px; width: 100%; background: #151c3d;
+  max-width: 520px; width: 100%; background: #151c3d;
   border: 1px solid rgba(255, 179, 71, 0.45); border-radius: 14px;
-  padding: 26px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+  padding: 24px; text-align: center; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.65);
 }
 .kicker { color: var(--lantern); font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; }
 .modal h1 { margin: 8px 0 10px; font-size: 28px; color: var(--core); }
-.modal p { color: var(--muted); line-height: 1.5; margin-bottom: 16px; }
-.controls-list {
-  text-align: left; background: rgba(11, 16, 40, 0.7); border-radius: 8px;
+.modal p { color: var(--muted); line-height: 1.5; margin-bottom: 14px; }
+.controls-list, .settings-panel {
+  text-align: left; background: rgba(11, 16, 40, 0.72); border-radius: 8px;
   padding: 12px 14px; font-size: 13px; color: var(--ink);
-  display: grid; gap: 6px; margin-bottom: 18px;
+  display: grid; gap: 8px; margin-bottom: 16px;
 }
+.settings-panel label { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 kbd {
   background: #242d5c; border: 1px solid #3f4c8a; border-radius: 4px;
   padding: 1px 6px; font-family: monospace; color: var(--core);
 }
+.modal-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
 button {
-  background: linear-gradient(135deg, #ffb347, #ff8c32); color: #120a1a;
-  border: none; border-radius: 999px; padding: 12px 26px;
-  font-size: 16px; font-weight: 700; cursor: pointer;
+  background: linear-gradient(135deg, #ffb347, #f2c14e); color: #120a1a;
+  border: none; border-radius: 999px; padding: 11px 22px;
+  font-size: 15px; font-weight: 700; cursor: pointer;
 }
+button.secondary { background: #263161; color: var(--ink); border: 1px solid #415094; }
 button:hover { filter: brightness(1.08); }

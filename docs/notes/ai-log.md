@@ -26,4 +26,5 @@
 | Phase | Coding Agent (est. tokens) | `qwen4-max-preview` Reviewer (exact from `token-log.jsonl`) | Notes |
 |---|---|---|---|
 | CP0 | ~15k context + iterative fixes | Logged per run in `docs/notes/token-log.jsonl` | Harness + CI + CP0 setup (`VERDICT: PASS`) |
-| Phase 1 | ~20k context + code/tests | See `token-log.jsonl` (`phase: "1"`) | Pure Python sim + headless CLI + Three.js WebSocket 3D view |
+| Phase 1 | ~20k context + code/tests | See `token-log.jsonl` (`phase: "1"`) | Pure Python sim + headless CLI + Three.js WebSocket 3D view (`tag: phase-1`) |
+| Phase 2 | ~22k context + code/tests | See `token-log.jsonl` (`phase: "2"`) | Ticket-02 standardized constants, 3 Nights, Dash, Drifters, Charms, Pause, Wind, Contract v1.1 (`tag: phase-2`) |

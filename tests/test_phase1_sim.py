@@ -32,7 +32,8 @@ class TestPhase1Simulation(unittest.TestCase):
 
     def test_contract_json_matches_phase1_tuning(self) -> None:
         contract = json.loads((ROOT / "game.contract.json").read_text(encoding="utf-8"))
-        self.assertEqual(contract["contract_version"], "1.0")
+        # Updated in Phase 2 (Ticket-02): contract_version upgraded to 1.1 while preserving all v1.0 keys
+        self.assertEqual(contract["contract_version"], "1.1")
         required_tuning_keys = {
             "player_speed", "carry_capacity", "lantern_cost", "lantern_count_night1",
             "pickup_radius", "interact_radius", "pulse_cost", "pulse_radius",
@@ -52,7 +53,7 @@ class TestPhase1Simulation(unittest.TestCase):
             "http", "socket", "threading", "tkinter", "pygame", "pyglet",
             "os", "sys", "time", "subprocess", "importlib", "json", "pathlib", "numpy",
         }
-        for rel in ("src/game/constants.py", "src/game/sim.py"):
+        for rel in ("src/game/constants.py", "src/game/maps.py", "src/game/sim.py"):
             tree = ast.parse((ROOT / rel).read_text(encoding="utf-8"))
             for node in ast.walk(tree):
                 if isinstance(node, ast.Import):
@@ -131,13 +132,14 @@ class TestPhase1Simulation(unittest.TestCase):
         self.assertTrue(any(e["name"] == "deposit" and e["tick"] == 4 for e in ev4))
 
     def test_pulse_stuns_pushes_and_respects_cooldown_and_cost(self) -> None:
+        # Updated in Phase 2 (Ticket-02 Part 1): Pulse measures 3D distance from feet+0.8m to shade center
         sc = {
             "player": {"pos": [0.0, 0.0, 0.0], "carried": 7, "flames": 3},
             "random_motes": False,
             "random_shades": False,
             "shades": [
-                {"id": "S1", "pos": [5.0, 0.0, 0.0]},
-                {"id": "S2", "pos": [5.05, 0.0, 0.0]},
+                {"id": "S1", "pos": [5.0, 0.8, 0.0]},
+                {"id": "S2", "pos": [5.05, 0.8, 0.0]},
             ],
         }
         sim = Simulation(seed=3, night=1, scenario=sc)
@@ -212,7 +214,10 @@ class TestPhase1Simulation(unittest.TestCase):
             evs = sim.step()
             hit_events.extend(e for e in evs if e["name"] == "player_hit")
         self.assertEqual(len(hit_events), 1)
-        self.assertEqual(hit_events[0]["data"], {"by": "fall", "flames": 1, "dropped": 4})
+        self.assertEqual(hit_events[0]["data"]["by"], "fall")
+        self.assertEqual(hit_events[0]["data"]["flames"], 1)
+        self.assertEqual(hit_events[0]["data"]["dropped"], 4)
+        self.assertEqual(hit_events[0]["data"]["lost"], 4)
         self.assertEqual(sim.player.carried, 0)
         # Wait out 60-tick respawn delay
         for _ in range(65):

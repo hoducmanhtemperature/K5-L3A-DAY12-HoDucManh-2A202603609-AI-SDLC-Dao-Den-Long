@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Đảo Đèn Lồng — Đêm 1: Đảo Bến</title>
+  <title>Đảo Đèn Lồng — Ba Hòn Đảo</title>
   <link rel="stylesheet" href="./style.css">
 </head>
 <body>
@@ -16,8 +16,9 @@
         <div id="flames"></div>
       </div>
       <div class="card center" id="timer-box">
-        <span class="label">Đêm 1 · Đảo Bến</span>
+        <span class="label" id="night-label">Đêm 1 · Đảo Bến</span>
         <strong id="timer">05:00</strong>
+        <div id="wind-banner" class="wind-badge hidden">Gió mạnh!</div>
       </div>
       <div class="card right" id="score-box">
         <div>Đèn: <strong id="lit-count">0/5</strong></div>
@@ -25,35 +26,49 @@
       </div>
     </div>
 
-    <div id="interact-prompt" class="prompt hidden">Nhấn <strong>E</strong> — Nạp ánh sáng (<span id="prompt-progress">0/10</span>)</div>
+    <div id="offscreen-arrow" class="arrow hidden">▲</div>
+    <div id="interact-prompt" class="prompt hidden">E — Nạp ánh sáng (<span id="prompt-progress">0/10</span>)</div>
 
     <div class="hud-bottom">
       <div class="card" id="motes-box">
-        <span class="label">Đom đóm: <strong id="carried-text">0/10</strong></span>
+        <span class="label">Đom đóm: <strong id="carried-text">0/10</strong> <span id="charm-tag" class="charm hidden">Bùa Gió</span></span>
         <div class="pips" id="pips"></div>
       </div>
-      <div class="card" id="pulse-box">
-        <span class="label">[Q / F] Tỏa Sáng (3 đom đóm)</span>
-        <strong id="pulse-cd">Sẵn sàng</strong>
+      <div class="hud-abilities">
+        <div class="card" id="dash-box">
+          <span class="label">[Shift] Lướt</span>
+          <strong id="dash-cd">Sẵn sàng</strong>
+        </div>
+        <div class="card" id="pulse-box">
+          <span class="label">[Q / F] Tỏa Sáng</span>
+          <strong id="pulse-cd">Sẵn sàng</strong>
+        </div>
       </div>
     </div>
   </div>
 
   <div id="overlay" class="overlay">
     <div class="modal">
-      <div class="kicker" id="modal-kicker">Đảo Đèn Lồng · Đêm 1</div>
-      <h1 id="modal-title">Đảo Bến</h1>
+      <div class="kicker" id="modal-kicker">Đảo Đèn Lồng · Ba Hòn Đảo</div>
+      <h1 id="modal-title">Đảo Đèn Lồng</h1>
       <p id="modal-desc">
-        Thu thập đom đóm, thắp lại 5 Đèn Lồng Lớn và né Bóng Mực trong sương đen.
+        Ông Đăng dặn: "Giữ ánh sáng trên ba hòn đảo trước khi bình minh tắt. Đom đóm là hơi thở của đêm."
       </p>
-      <div class="controls-list">
-        <div><kbd>WASD</kbd> / <kbd>↑↓←→</kbd> Di chuyển</div>
-        <div><kbd>Kéo chuột</kbd> / <kbd>J</kbd><kbd>L</kbd> Xoay camera</div>
-        <div><kbd>Space</kbd> Nhảy</div>
-        <div><kbd>E</kbd> Nạp ánh sáng vào đèn</div>
-        <div><kbd>Q</kbd> / <kbd>F</kbd> Tỏa Sáng (xua Bóng Mực)</div>
+      <div class="controls-list" id="controls-panel">
+        <div><kbd>WASD</kbd> / <kbd>↑↓←→</kbd> Di chuyển · <kbd>Space</kbd> Nhảy · <kbd>Shift</kbd> Lướt</div>
+        <div><kbd>Kéo chuột</kbd> / <kbd>J</kbd><kbd>L</kbd> Xoay camera · <kbd>E</kbd> Nạp đèn · <kbd>Q/F</kbd> Tỏa Sáng</div>
+        <div><kbd>Esc</kbd> / <kbd>P</kbd> Tạm dừng &amp; Cài đặt</div>
       </div>
-      <button id="btn-start" type="button">Bắt đầu Đêm 1</button>
+      <div class="settings-panel hidden" id="settings-panel">
+        <label>Âm lượng <input id="opt-volume" type="range" min="0" max="1" step="0.05" value="0.6"></label>
+        <label>Độ nhạy chuột <input id="opt-sens" type="range" min="0.1" max="1.0" step="0.05" value="0.35"></label>
+      </div>
+      <div class="modal-actions" id="modal-actions">
+        <button id="btn-primary" type="button">Bắt đầu Đêm 1</button>
+        <button id="btn-secondary" type="button" class="secondary hidden">Chơi lại Đêm</button>
+        <button id="btn-settings" type="button" class="secondary">Cài đặt</button>
+        <button id="btn-menu" type="button" class="secondary hidden">Về menu</button>
+      </div>
     </div>
   </div>
 
