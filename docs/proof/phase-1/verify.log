@@ -1,11 +1,12 @@
 === Verification Report (phase=1) ===
-Timestamp (UTC): 2026-11-20T09:13:52.695951+00:00
-Git HEAD: f0b40c3
-Git working tree: dirty (14 uncommitted path(s))
+Timestamp (UTC): 2026-11-20T09:14:50.018126+00:00
+Git HEAD: 4ca5dd5
+Git working tree: clean
 Git core.hooksPath: .githooks
 Python: 3.13.14
 Phase spec check: SPEC_PRESENT
 Secret scan: PASS
+Clean tree check: PASS
 
 --- Unit Tests (python3 -m unittest discover -s tests -v) ---
 test_env_ignored_and_hook_executable_in_index (test_harness_smoke.TestHarnessSmoke.test_env_ignored_and_hook_executable_in_index) ... ok
@@ -29,7 +30,7 @@ test_shade_hit_drops_motes_grants_invuln_and_safe_radius_blocks_shades (test_pha
 test_sim_module_is_decoupled_from_io_and_rendering (test_phase1_sim.TestPhase1Simulation.test_sim_module_is_decoupled_from_io_and_rendering) ... ok
 
 ----------------------------------------------------------------------
-Ran 18 tests in 3.544s
+Ran 18 tests in 3.592s
 
 OK
 
