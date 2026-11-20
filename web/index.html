@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Đảo Đèn Lồng — Đêm 1: Đảo Bến</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <div id="canvas-wrap"></div>
+
+  <div id="hud">
+    <div class="hud-top">
+      <div class="card" id="flames-box">
+        <span class="label">Ngọn Lửa</span>
+        <div id="flames"></div>
+      </div>
+      <div class="card center" id="timer-box">
+        <span class="label">Đêm 1 · Đảo Bến</span>
+        <strong id="timer">05:00</strong>
+      </div>
+      <div class="card right" id="score-box">
+        <div>Đèn: <strong id="lit-count">0/5</strong></div>
+        <div>Điểm: <strong id="score">0</strong></div>
+      </div>
+    </div>
+
+    <div id="interact-prompt" class="prompt hidden">Nhấn <strong>E</strong> — Nạp ánh sáng (<span id="prompt-progress">0/10</span>)</div>
+
+    <div class="hud-bottom">
+      <div class="card" id="motes-box">
+        <span class="label">Đom đóm: <strong id="carried-text">0/10</strong></span>
+        <div class="pips" id="pips"></div>
+      </div>
+      <div class="card" id="pulse-box">
+        <span class="label">[Q / F] Tỏa Sáng (3 đom đóm)</span>
+        <strong id="pulse-cd">Sẵn sàng</strong>
+      </div>
+    </div>
+  </div>
+
+  <div id="overlay" class="overlay">
+    <div class="modal">
+      <div class="kicker" id="modal-kicker">Đảo Đèn Lồng · Đêm 1</div>
+      <h1 id="modal-title">Đảo Bến</h1>
+      <p id="modal-desc">
+        Thu thập đom đóm, thắp lại 5 Đèn Lồng Lớn và né Bóng Mực trong sương đen.
+      </p>
+      <div class="controls-list">
+        <div><kbd>WASD</kbd> / <kbd>↑↓←→</kbd> Di chuyển</div>
+        <div><kbd>Kéo chuột</kbd> / <kbd>J</kbd><kbd>L</kbd> Xoay camera</div>
+        <div><kbd>Space</kbd> Nhảy</div>
+        <div><kbd>E</kbd> Nạp ánh sáng vào đèn</div>
+        <div><kbd>Q</kbd> / <kbd>F</kbd> Tỏa Sáng (xua Bóng Mực)</div>
+      </div>
+      <button id="btn-start" type="button">Bắt đầu Đêm 1</button>
+    </div>
+  </div>
+
+  <script src="./vendor/three.min.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>

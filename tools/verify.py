@@ -185,12 +185,49 @@ def check_secrets(include_staged: bool = False) -> tuple[bool, list[str], list[s
 
 
 def check_phase_requirements(phase: str, root: pathlib.Path = ROOT) -> tuple[bool, list[str]]:
-    """Ensure --phase N (>0) cannot falsely pass before phase-N spec exists."""
+    """Ensure --phase N (>0) has its spec, contract, and deterministic headless scenario passing."""
     if phase == "0":
         return True, []
     spec_path = root / "docs" / "specs" / f"phase-{phase}.md"
     if not spec_path.is_file():
         return False, [f"Missing phase spec {spec_path.relative_to(root)} for --phase {phase}"]
+
+    contract_path = root / "game.contract.json"
+    if not contract_path.is_file():
+        return False, [f"Missing game.contract.json for --phase {phase}"]
+
+    if root == ROOT:
+        # Run headless determinism double-run against phase-1 scenario when running on real repo
+        sc_path = root / "tests" / "scenarios" / "p1_win_night1.json"
+        in_path = root / "tests" / "scenarios" / "p1_win_inputs.json"
+        if sc_path.is_file() and in_path.is_file():
+            import tempfile
+
+            with tempfile.TemporaryDirectory() as tmp:
+                out1 = pathlib.Path(tmp) / "run1.jsonl"
+                out2 = pathlib.Path(tmp) / "run2.jsonl"
+                base_args = [
+                    sys.executable,
+                    str(root / "src" / "headless.py"),
+                    "--seed",
+                    "42",
+                    "--night",
+                    "1",
+                    "--scenario",
+                    str(sc_path),
+                    "--inputs",
+                    str(in_path),
+                    "--ticks",
+                    "120",
+                    "--snapshot-every",
+                    "10",
+                ]
+                rc1, _, err1 = run_cmd([*base_args, "--out", str(out1)], cwd=root)
+                rc2, _, err2 = run_cmd([*base_args, "--out", str(out2)], cwd=root)
+                if rc1 != 0 or rc2 != 0:
+                    return False, [f"Headless scenario failed: rc1={rc1} ({err1}) rc2={rc2} ({err2})"]
+                if out1.read_text(encoding="utf-8") != out2.read_text(encoding="utf-8"):
+                    return False, ["Headless determinism check failed: run1 != run2"]
     return True, []
 
 

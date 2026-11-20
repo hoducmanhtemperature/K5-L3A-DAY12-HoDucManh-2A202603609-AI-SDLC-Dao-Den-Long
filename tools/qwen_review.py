@@ -92,7 +92,7 @@ def get_git_diff(
     root: pathlib.Path = ROOT,
 ) -> str:
     """Collect git diff + untracked files; fail closed on git errors, empty diffs, or oversized diffs."""
-    path_filter = ["--", ".", ":!docs/proof/"]
+    path_filter = ["--", ".", ":!docs/proof/", ":!web/vendor/"]
     cmd = ["git", "diff", base_ref, *path_filter] if base_ref else ["git", "diff", "HEAD", *path_filter]
     proc = subprocess.run(cmd, cwd=root, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     if proc.returncode != 0:

@@ -112,3 +112,40 @@ python3 tools/verify.py --ci --require-clean
 # Optional on local clones to enable pre-commit secret/test gate (CI always enforces):
 git config core.hooksPath .githooks
 ```
+
+---
+
+## Chơi game & Kiểm thử (Phase 1 — Đêm 1: Đảo Bến)
+
+Yêu cầu: **Python ≥ 3.10** (không cần cài thư viện ngoài; Three.js `r128` MIT đã được đóng gói sẵn trong `web/vendor/three.min.js`).
+
+### 1. Chạy game 3D (tối đa 2 lệnh)
+```bash
+git clone https://github.com/hoducmanhtemperature/K5-L3-LAB-Day12-AI-SDLC.git && cd K5-L3-LAB-Day12-AI-SDLC
+python3 src/server.py
+```
+Mở trình duyệt tại địa chỉ in ra (mặc định `http://127.0.0.1:8080/`).
+
+### 2. Điều khiển
+- **Di chuyển:** `WASD` hoặc phím mũi tên
+- **Xoay camera:** Kéo chuột trái hoặc `J` / `L`
+- **Nhảy:** `Space`
+- **Nạp ánh sáng vào Đèn Lồng Lớn:** `E` (khi đứng trong bán kính `2.0 m`)
+- **Tỏa Sáng (xua & làm choáng Bóng Mực):** `Q` hoặc `F` (tốn `3` đom đóm, hồi chiêu `3 s`)
+- **Chơi lại sau khi thắng/thua:** `R` hoặc bấm nút **Chơi lại**
+
+### 3. Tính điểm (`game.contract.json` v1.0)
+- `+10` mỗi đom đóm nạp vào Đèn Lồng Lớn
+- `+100` mỗi Đèn Lồng Lớn được thắp sáng (10 đom đóm/đèn)
+- `+5` mỗi Bóng Mực trúng Tỏa Sáng
+- Khi thắng (thắp đủ 5 đèn): `+ floor(giây còn lại) × 2 + Ngọn Lửa còn lại × 50`
+
+### 4. Chạy Test & Chế độ Headless (Test Contract v1.0)
+```bash
+python3 tools/verify.py --phase 1 --ci
+python3 src/headless.py --seed 42 --night 1 --scenario tests/scenarios/p1_win_night1.json --inputs tests/scenarios/p1_win_inputs.json --ticks 120 --out /tmp/p1.jsonl
+```
+
+### 5. Sáng tạo của tôi
+- Âm thanh thủ tục bằng Web Audio API (nhạc/chuông phản hồi khi nhặt đom đóm, nạp đèn, thắp đèn, Tỏa Sáng, bị đánh và kết thúc Đêm) chạy thuần phía trình duyệt.
+- Hiệu ứng vòng ánh sáng an toàn quanh đèn đã thắp, ánh sáng & sương đảo sáng dần theo số đèn đã thắp, nón lá kèm đèn lồng nhỏ cho Mây. Toàn bộ phần sáng tạo chỉ nằm ở lớp hiển thị `web/` nên **không** làm đổi đầu ra headless của `src/game/sim.py`.

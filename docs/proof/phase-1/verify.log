@@ -1,0 +1,36 @@
+=== Verification Report (phase=1) ===
+Timestamp (UTC): 2026-11-20T09:13:52.695951+00:00
+Git HEAD: f0b40c3
+Git working tree: dirty (14 uncommitted path(s))
+Git core.hooksPath: .githooks
+Python: 3.13.14
+Phase spec check: SPEC_PRESENT
+Secret scan: PASS
+
+--- Unit Tests (python3 -m unittest discover -s tests -v) ---
+test_env_ignored_and_hook_executable_in_index (test_harness_smoke.TestHarnessSmoke.test_env_ignored_and_hook_executable_in_index) ... ok
+test_hello_headless_and_local_http_serve (test_harness_smoke.TestHarnessSmoke.test_hello_headless_and_local_http_serve) ... ok
+test_hook_blocks_forbidden_and_staged_secret_and_allows_clean_binary (test_harness_smoke.TestHarnessSmoke.test_hook_blocks_forbidden_and_staged_secret_and_allows_clean_binary) ... ok
+test_phase_validation_hermetic_and_strict_review_guards (test_harness_smoke.TestHarnessSmoke.test_phase_validation_hermetic_and_strict_review_guards) ... ok
+test_qwen_review_get_git_diff_fail_closed_on_empty_invalid_and_oversized (test_harness_smoke.TestHarnessSmoke.test_qwen_review_get_git_diff_fail_closed_on_empty_invalid_and_oversized) ... ok
+test_secret_scanner_boundaries_and_filenames (test_harness_smoke.TestHarnessSmoke.test_secret_scanner_boundaries_and_filenames) ... ok
+test_verify_blocks_non_ascii_secret_oversized_binary_dirty_red_and_skipped (test_harness_smoke.TestHarnessSmoke.test_verify_blocks_non_ascii_secret_oversized_binary_dirty_red_and_skipped) ... verify.py: PASS (phase=0, commit=no-commit, tree=dirty (7 uncommitted path(s)))
+ok
+test_3d_http_and_websocket_server_drives_live_simulation (test_phase1_sim.TestPhase1Simulation.test_3d_http_and_websocket_server_drives_live_simulation) ... ok
+test_contract_json_matches_phase1_tuning (test_phase1_sim.TestPhase1Simulation.test_contract_json_matches_phase1_tuning) ... ok
+test_fall_off_island_deducts_flame_and_respawns_or_loses (test_phase1_sim.TestPhase1Simulation.test_fall_off_island_deducts_flame_and_respawns_or_loses) ... ok
+test_headless_cli_determinism_jsonl_contract_and_exit_code_2 (test_phase1_sim.TestPhase1Simulation.test_headless_cli_determinism_jsonl_contract_and_exit_code_2) ... ok
+test_headless_full_night_performance_budget (test_phase1_sim.TestPhase1Simulation.test_headless_full_night_performance_budget) ... ok
+test_interact_held_does_not_retrigger_without_false_transition (test_phase1_sim.TestPhase1Simulation.test_interact_held_does_not_retrigger_without_false_transition) ... ok
+test_mote_pickup_capacity_and_lantern_deposit_rising_edge_win (test_phase1_sim.TestPhase1Simulation.test_mote_pickup_capacity_and_lantern_deposit_rising_edge_win) ... ok
+test_movement_cam_yaw_and_diagonal_normalization (test_phase1_sim.TestPhase1Simulation.test_movement_cam_yaw_and_diagonal_normalization) ... ok
+test_pulse_stuns_pushes_and_respects_cooldown_and_cost (test_phase1_sim.TestPhase1Simulation.test_pulse_stuns_pushes_and_respects_cooldown_and_cost) ... ok
+test_shade_hit_drops_motes_grants_invuln_and_safe_radius_blocks_shades (test_phase1_sim.TestPhase1Simulation.test_shade_hit_drops_motes_grants_invuln_and_safe_radius_blocks_shades) ... ok
+test_sim_module_is_decoupled_from_io_and_rendering (test_phase1_sim.TestPhase1Simulation.test_sim_module_is_decoupled_from_io_and_rendering) ... ok
+
+----------------------------------------------------------------------
+Ran 18 tests in 3.544s
+
+OK
+
+OVERALL: PASS

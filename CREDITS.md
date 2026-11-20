@@ -8,4 +8,5 @@
 - **Independent Reviewer / Spec Auditor:** `qwen4-max-preview` (via Alibaba Cloud Bailian Token Plan)
 
 ## External Assets & Libraries
-- *(To be updated as engine/libraries/assets are added in Phase 1–4. Only CC0 / CC-BY / MIT or self-created assets permitted.)*
+- **Three.js (`r128`)** (`web/vendor/three.min.js`): Copyright © 2010–2021 Three.js Authors, licensed under the **MIT License**.
+- **Audio & 3D Geometry:** Procedurally generated at runtime using Three.js primitives and Web Audio API (no external proprietary assets).

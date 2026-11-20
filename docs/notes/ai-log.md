@@ -23,4 +23,5 @@
 ## Per-Phase Summary
 | Phase | Coding Agent (est. tokens) | `qwen4-max-preview` Reviewer (exact from `token-log.jsonl`) | Notes |
 |---|---|---|---|
-| CP0 | ~15k context + iterative fixes | Logged per run in `docs/notes/token-log.jsonl` | Harness + CI + CP0 setup |
+| CP0 | ~15k context + iterative fixes | Logged per run in `docs/notes/token-log.jsonl` | Harness + CI + CP0 setup (`VERDICT: PASS`) |
+| Phase 1 | ~20k context + code/tests | See `token-log.jsonl` (`phase: "1"`) | Pure Python sim + headless CLI + Three.js WebSocket 3D view |
