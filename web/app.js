@@ -368,6 +368,7 @@
   let totalGameScore = 0;
   let screenMode = "menu"; // menu | intro | playing | paused | result | dawn
   let lastState = null;
+  let awaitingFreshState = false;
 
   const keys = new Set();
   let camYawDeg = 0;
@@ -435,6 +436,11 @@
     ws.onopen = onOpen;
     ws.onmessage = (ev) => {
       const msg = JSON.parse(ev.data);
+      const staleAfterStart = awaitingFreshState && msg.state && (
+        msg.state.night !== currentNight || msg.state.state === "won" || msg.state.state === "lost"
+      );
+      if (staleAfterStart) return;
+      if (awaitingFreshState && msg.state?.state === "playing") awaitingFreshState = false;
       if (msg.events) {
         for (const e of msg.events) handleEvent(e);
       }
@@ -450,6 +456,8 @@
     ensureAudio();
     currentNight = night;
     currentSeed = Math.floor(Math.random() * 100000) + 1;
+    awaitingFreshState = true;
+    lastState = null;
     clearEntityPools();
     buildNightGeometry(night);
     connectWS(() => {

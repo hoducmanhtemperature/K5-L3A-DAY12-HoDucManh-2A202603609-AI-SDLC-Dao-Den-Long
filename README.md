@@ -1,5 +1,7 @@
 # Đảo Đèn Lồng — Release `v1.0.0` (Test Contract v1.3)
 
+**Video demo (3:23):** [docs/demo/demo_montage.mp4](docs/demo/demo_montage.mp4)
+
 A 3D third-person fairy-tale survival game built across 4 AI SDLC phases (`phase-1` → `phase-4` / `v1.0.0`) with a deterministic 60-Hz Python simulation core and a zero-dependency Three.js WebGL renderer.
 
 ## System Requirements
