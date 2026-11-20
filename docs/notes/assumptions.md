@@ -36,8 +36,17 @@ Record every ambiguity in the phase specifications, the chosen concrete values/r
   - **TA Clarifications Incorporated:** Scheduled Shades enter `spawning` for 60 ticks (`1.0 s`, no damage) before `wander` (scenario Shades start in `wander`); Night 2 starts at `(0, 0, 0)` and Night 3 starts/respawns at `(0, 0, -15)` facing `+Z`; `night_start` event is emitted on `tick == 1`; `player.invuln` in snapshots is boolean.
   - **Phase 1 Test Updates:** `test_contract_json_matches_phase1_tuning` updated to verify Contract v1.1 tuning keys (superset of v1.0); `test_pulse_stuns_pushes_and_respects_cooldown_and_cost` updated shade Y from `0.0` to `0.8` to match Ticket-02's explicit 3D pulse origin (`feet + 0.8 m`); `test_fall_off_island_deducts_flame_and_respawns_or_loses` updated to also assert Contract v1.1's `lost` field.
 
-## Phase 3 (Ticket-03)
-- *(Pending Ticket-03)*
+## Phase 3 (Ticket-03 — Đèn cạn dầu / Contract v1.2)
+- **ADR:** Recorded in `docs/adr/ADR-001-lantern-fuel-and-dawn-survival.md`.
+- **Exact Integer Fuel Arithmetic (`fuel_60`):** Each lantern stores fuel in `1/60` integer units (`0..6000` corresponding to `0.0..100.0`), eliminating floating-point drift across `1/60` natural decay per tick and `5/60` Shade drain per tick.
+- **Full-Lantern Refuel Guard:** Because Step 2 (fuel decay) runs before Step 5 (lantern interact), a lantern starting a tick at `100.0` (`6000`) decays to `5999` (`99.983`) before Step 5. Step 5 skips refueling when `fuel_60 >= FUEL_MAX_60 - FUEL_DECAY_PER_TICK_60` (`5999`), honoring Ticket-03's "đèn đầy dầu (`fuel == 100`) → bỏ qua, không tốn đom đóm".
+- **Safe Zone Threshold & Shade Drain:** Lit lanterns keep their `6.0 m` safe zone while `fuel >= 30.0` (`fuel_60 >= 1800`) and lose it at `fuel < 30.0`. Shades in `wander` prioritize weak lit lanterns (`fuel < 30`) and enter `drain` within `2.0 m` (`5/s` drain, `fuel_drain` event every 60 ticks). Refueling a weak lantern back to `>= 30.0` immediately cancels `drain` and repels enclosed Shades outside `6.0 m`.
+- **Dawn Survival Win & Rebalanced Scoring:** Lighting all lanterns no longer ends the night early (`all_lit` removed). Nights run until `time_left_s == 0` (`240/270/300 s` for Nights 1/2/3), winning with `reason: "dawn_survived"` iff `lit_count >= ceil(0.6 * total_lanterns)` (`3/5`, `4/6`, `5/7`). Scoring: `+5`/mote deposited or refueled, `+100` first light, `+40` relight (`relight_cost = 5` when `ever_lit`), `+5` Pulse stun (`+15` if draining), Dawn bonus `+50 + floor(fuel)` per lit lantern + `+50` per remaining Flame.
+- **Progressive Capacity:** `player.capacity = min(20, 10 + 2 * successful_lights)` (incremented on both first light and relight).
+- **Phase 1 & Phase 2 Tests Updated for Contract v1.2 Breaking Changes:**
+  - `tests/test_phase1_sim.py` (`test_contract_json_matches_phase1_tuning`) & `tests/test_phase2_features.py` (`test_contract_v1_1_snapshot_and_tuning_fields`): updated expected `contract_version` to `"1.2"` and score keys superset.
+  - `tests/test_phase1_sim.py` (`test_mote_pickup_capacity_and_lantern_deposit_rising_edge_win`): updated for Dawn Survival (lighting 5/5 keeps `state == "playing"` instead of early `game_over`), new `capacity == 12`, and `+5/mote` (`10*5 + 100 = 150`).
+  - `tests/test_phase1_sim.py` (`test_headless_cli_determinism_jsonl_contract_and_exit_code_2`) & `tests/scenarios/p1_win_night1.json`: updated Night 1 default timer assertion from `300.0` to `240.0` and set `p1_win_night1.json` `time_left_s` to `0.5` (`30` ticks) so the win scenario exercises Dawn Survival termination cleanly.
 
 ## Phase 4 (Ticket-04)
 - *(Pending Ticket-04)*

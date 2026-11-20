@@ -21,7 +21,8 @@ class TestPhase2Features(unittest.TestCase):
 
     def test_contract_v1_1_snapshot_and_tuning_fields(self) -> None:
         contract = json.loads((ROOT / "game.contract.json").read_text(encoding="utf-8"))
-        self.assertEqual(contract["contract_version"], "1.1")
+        # Updated in Phase 3 (Ticket-03): contract_version upgraded to 1.2 while preserving all v1.1 keys
+        self.assertEqual(contract["contract_version"], "1.2")
         for k in ("dash_speed", "dash_duration_s", "dash_cooldown_s", "night2_duration_s", "night3_duration_s"):
             self.assertIn(k, contract["tuning"])
 

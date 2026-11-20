@@ -16,6 +16,7 @@
   const settingsPanel = document.getElementById("settings-panel");
   const optVolume = document.getElementById("opt-volume");
   const optSens = document.getElementById("opt-sens");
+  const optColorblind = document.getElementById("opt-colorblind");
 
   const btnPrimary = document.getElementById("btn-primary");
   const btnSecondary = document.getElementById("btn-secondary");
@@ -27,6 +28,8 @@
   const elTimer = document.getElementById("timer");
   const elWind = document.getElementById("wind-banner");
   const elLit = document.getElementById("lit-count");
+  const elLitTarget = document.getElementById("lit-target");
+  const elLowFuel = document.getElementById("low-fuel-banner");
   const elScore = document.getElementById("score");
   const elCarried = document.getElementById("carried-text");
   const elCharmTag = document.getElementById("charm-tag");
@@ -37,13 +40,16 @@
   const elPromptProg = document.getElementById("prompt-progress");
   const elArrow = document.getElementById("offscreen-arrow");
 
-  // Persistent settings (Ticket-02 Part 3 #5)
+  // Persistent settings (Ticket-02 Part 3 #5 + Ticket-03 Colorblind mode)
   const settings = {
     volume: parseFloat(localStorage.getItem("ddl_volume") || "0.6"),
     sensitivity: parseFloat(localStorage.getItem("ddl_sens") || "0.35"),
+    colorblind: localStorage.getItem("ddl_colorblind") === "1",
   };
   optVolume.value = String(settings.volume);
   optSens.value = String(settings.sensitivity);
+  optColorblind.checked = settings.colorblind;
+  document.body.classList.toggle("colorblind", settings.colorblind);
   optVolume.addEventListener("input", () => {
     settings.volume = parseFloat(optVolume.value);
     localStorage.setItem("ddl_volume", String(settings.volume));
@@ -51,6 +57,11 @@
   optSens.addEventListener("input", () => {
     settings.sensitivity = parseFloat(optSens.value);
     localStorage.setItem("ddl_sens", String(settings.sensitivity));
+  });
+  optColorblind.addEventListener("change", () => {
+    settings.colorblind = optColorblind.checked;
+    localStorage.setItem("ddl_colorblind", settings.colorblind ? "1" : "0");
+    document.body.classList.toggle("colorblind", settings.colorblind);
   });
 
   // Procedural Web Audio (night ambience + SFX)
@@ -220,6 +231,17 @@
     const core = new THREE.Mesh(new THREE.OctahedronGeometry(0.48, 0), coreMat);
     core.position.y = 2.6;
     grp.add(core);
+    // 3D Fuel bar above lantern (Ticket-03)
+    const fuelBg = new THREE.Mesh(
+      new THREE.PlaneGeometry(1.4, 0.18),
+      new THREE.MeshBasicMaterial({ color: 0x151c3d, side: THREE.DoubleSide })
+    );
+    fuelBg.position.set(0, 3.45, 0);
+    grp.add(fuelBg);
+    const fuelBarMat = new THREE.MeshBasicMaterial({ color: 0xffb347, side: THREE.DoubleSide });
+    const fuelBar = new THREE.Mesh(new THREE.PlaneGeometry(1.32, 0.12), fuelBarMat);
+    fuelBar.position.set(0, 3.45, 0.01);
+    grp.add(fuelBar);
     const safeRing = new THREE.Mesh(
       new THREE.RingGeometry(5.85, 6.0, 48),
       new THREE.MeshBasicMaterial({ color: 0xffb347, side: THREE.DoubleSide, transparent: true, opacity: 0 })
@@ -231,7 +253,7 @@
     light.position.y = 2.7;
     grp.add(light);
     scene.add(grp);
-    const entry = { grp, coreMat, safeRing, light };
+    const entry = { grp, core, coreMat, fuelBg, fuelBar, fuelBarMat, safeRing, light };
     lanternViews.set(lan.id, entry);
     return entry;
   }
@@ -397,23 +419,38 @@
     if (s.player_extra) playerGroup.rotation.y = (s.player_extra.yaw_deg * Math.PI) / 180;
 
     let litCount = 0;
+    const blinkOn = (Math.floor(s.tick / 30) % 2) === 0; // 1 Hz blink
     for (const lan of s.lanterns) {
       const v = ensureLanternView(lan);
       v.grp.position.set(lan.pos[0], lan.pos[1], lan.pos[2]);
+      v.fuelBg.lookAt(camera.position);
+      v.fuelBar.lookAt(camera.position);
       if (lan.lit) {
         litCount += 1;
-        v.coreMat.color.setHex(0xffe9b0);
-        v.coreMat.emissive.setHex(0xffb347);
-        v.coreMat.emissiveIntensity = 1.25;
-        v.light.intensity = 2.2;
-        v.safeRing.material.opacity = 0.28;
+        const fuel = typeof lan.fuel === "number" ? lan.fuel : 100;
+        const low = fuel < 30;
+        v.core.scale.set(1, 1, 1);
+        v.coreMat.color.setHex(low && !blinkOn ? 0xff5a5f : 0xffe9b0);
+        v.coreMat.emissive.setHex(low ? (settings.colorblind ? 0xffffff : 0xff5a5f) : 0xffb347);
+        v.coreMat.emissiveIntensity = low ? (blinkOn ? 1.35 : 0.35) : 1.25;
+        v.light.intensity = low ? (blinkOn ? 2.0 : 0.8) : 2.2;
+        v.safeRing.material.opacity = low ? 0.0 : 0.28;
+        v.fuelBg.visible = true;
+        v.fuelBar.visible = true;
+        v.fuelBar.scale.x = Math.max(0.01, fuel / 100);
+        v.fuelBarMat.color.setHex(low ? (settings.colorblind ? 0xffffff : 0xff5a5f) : 0xffb347);
       } else {
-        const ratio = lan.deposited / 10;
-        v.coreMat.color.setHex(0x5b5f6e);
+        const cost = lan.ever_lit ? 5 : 10;
+        const ratio = lan.deposited / cost;
+        // Unlit lantern shrunk 20% + distinct dim look when ever_lit (Ticket-03)
+        v.core.scale.set(0.8, 0.8, 0.8);
+        v.coreMat.color.setHex(lan.ever_lit ? 0x3b354a : 0x5b5f6e);
         v.coreMat.emissive.setHex(0xffb347);
         v.coreMat.emissiveIntensity = ratio * 0.6;
         v.light.intensity = ratio * 0.6;
         v.safeRing.material.opacity = 0.0;
+        v.fuelBg.visible = false;
+        v.fuelBar.visible = false;
       }
     }
     // Ticket-02 ambient formula: 0.15 + 0.55 * (lit / total)
@@ -438,7 +475,8 @@
     }, (v, sh) => {
       v.grp.position.set(sh.pos[0], sh.pos[1] + 0.85, sh.pos[2]);
       v.mat.color.setHex(sh.state === "stunned" ? 0x3a3450 : 0x120a1a);
-      v.mat.emissiveIntensity = sh.state === "stunned" ? 0.1 : (sh.state === "chase" ? 0.95 : 0.45);
+      v.mat.emissive.setHex(settings.colorblind ? 0x00b3ff : 0x7a3cff);
+      v.mat.emissiveIntensity = sh.state === "stunned" ? 0.1 : (sh.state === "chase" || sh.state === "drain" ? 0.95 : 0.45);
     });
 
     syncPool(drifterViews, s.drifters || [], () => {
@@ -523,14 +561,19 @@
     elWind.textContent = s.wind.active ? `Gió mạnh (${Math.round(s.wind.dir_deg)}°)` : "Sắp có gió mạnh...";
 
     const litCount = s.lanterns.filter((l) => l.lit).length;
+    const targetLit = Math.ceil(0.6 * s.lanterns.length);
+    const hasLowFuel = s.lanterns.some((l) => l.lit && typeof l.fuel === "number" && l.fuel < 30);
     elLit.textContent = `${litCount}/${s.lanterns.length}`;
+    elLitTarget.textContent = `(cần ${targetLit})`;
+    elLowFuel.classList.toggle("hidden", !hasLowFuel);
     elScore.textContent = String(s.score);
 
-    elCarried.textContent = `${s.player.carried}/10`;
+    const cap = s.player.capacity || 10;
+    elCarried.textContent = `${s.player.carried}/${cap}`;
     elCharmTag.classList.toggle("hidden", s.player.charm_s <= 0);
     if (s.player.charm_s > 0) elCharmTag.textContent = `Bùa Gió ${s.player.charm_s.toFixed(1)}s`;
     elPips.innerHTML = "";
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < cap; i++) {
       const pip = document.createElement("div");
       pip.className = "pip" + (i < s.player.carried ? " on" : "");
       elPips.appendChild(pip);
@@ -541,12 +584,19 @@
 
     let nearLan = null;
     for (const lan of s.lanterns) {
-      if (!lan.lit && Math.hypot(lan.pos[0] - s.player.pos[0], lan.pos[2] - s.player.pos[2]) <= 2.0 && Math.abs(lan.pos[1] - s.player.pos[1]) <= 1.5) {
-        nearLan = lan; break;
+      if (Math.hypot(lan.pos[0] - s.player.pos[0], lan.pos[2] - s.player.pos[2]) <= 2.0 && Math.abs(lan.pos[1] - s.player.pos[1]) <= 1.5) {
+        if (!lan.lit || (typeof lan.fuel === "number" && lan.fuel < 100)) {
+          nearLan = lan; break;
+        }
       }
     }
     if (nearLan && s.state === "playing") {
-      elPromptProg.textContent = `${nearLan.deposited}/10`;
+      if (nearLan.lit) {
+        elPrompt.textContent = `E — Châm dầu (${Math.floor(nearLan.fuel)}/100)`;
+      } else {
+        const cost = nearLan.ever_lit ? 5 : 10;
+        elPrompt.textContent = nearLan.ever_lit ? `E — Thắp lại (${nearLan.deposited}/${cost})` : `E — Nạp ánh sáng (${nearLan.deposited}/${cost})`;
+      }
       elPrompt.classList.remove("hidden");
     } else {
       elPrompt.classList.add("hidden");

@@ -5,7 +5,7 @@
 
 ## Architecture Rule
 - **Decouple pure simulation/logic from 3D rendering.** Headless mode (`src/headless.py`) and tests must run without a display/window.
-- **Strict Test Contract compliance (v1.1 in Phase 2):** follow the mandatory 12-step tick order, exact entity state names (`spawning`, `wander`, `chase`, `recoil`, `stunned`), and never leak renderer-only entities into headless JSONL output.
+- **Strict Test Contract compliance (v1.2 in Phase 3):** follow the mandatory 12-step tick order (including Step 2 integer `1/60` fuel decay + `drain` extinguish), exact entity state names (`spawning`, `wander`, `chase`, `recoil`, `stunned`, `drain`), and never leak renderer-only entities into headless JSONL output.
 - **Regression discipline:** Phase 1 tests must continue passing on Night 1 under Contract v1.1; any Phase 1 test updated for v1.1 schema/rule changes must record its reason in `docs/notes/assumptions.md`.
 
 ## Commands

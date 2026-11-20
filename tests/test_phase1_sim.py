@@ -32,8 +32,8 @@ class TestPhase1Simulation(unittest.TestCase):
 
     def test_contract_json_matches_phase1_tuning(self) -> None:
         contract = json.loads((ROOT / "game.contract.json").read_text(encoding="utf-8"))
-        # Updated in Phase 2 (Ticket-02): contract_version upgraded to 1.1 while preserving all v1.0 keys
-        self.assertEqual(contract["contract_version"], "1.1")
+        # Updated in Phase 3 (Ticket-03): contract_version upgraded to 1.2 with fuel/dawn keys
+        self.assertEqual(contract["contract_version"], "1.2")
         required_tuning_keys = {
             "player_speed", "carry_capacity", "lantern_cost", "lantern_count_night1",
             "pickup_radius", "interact_radius", "pulse_cost", "pulse_radius",
@@ -42,9 +42,10 @@ class TestPhase1Simulation(unittest.TestCase):
             "shade_speed", "shade_hit_radius", "fall_enabled", "score",
         }
         self.assertTrue(required_tuning_keys.issubset(contract["tuning"].keys()))
-        self.assertEqual(
-            set(contract["tuning"]["score"].keys()),
-            {"per_mote", "per_lantern", "per_stun", "per_second_left", "per_flame_left"},
+        self.assertTrue(
+            {"per_mote", "per_lantern", "per_stun", "per_flame_left"}.issubset(
+                contract["tuning"]["score"].keys()
+            )
         )
         self.assertEqual(contract["tuning"], PHASE1_TUNING)
 
@@ -95,18 +96,21 @@ class TestPhase1Simulation(unittest.TestCase):
         # Setup must not award score or emit events
         self.assertEqual(sim.score, 0)
         # First tick (k=0) produces events with tick == 1
+        # Updated in Phase 3 (Ticket-03): lighting 5/5 lanterns does NOT end night early;
+        # capacity grows 10 -> 12 and score is +5 (mote) + 100 (first light) = 105.
         evs = sim.step({"interact": True})
         names = [e["name"] for e in evs]
         self.assertIn("mote_picked", names)
         self.assertIn("deposit", names)
         self.assertIn("lantern_lit", names)
-        self.assertIn("game_over", names)
+        self.assertNotIn("game_over", names)
         for ev in evs:
             self.assertEqual(ev["tick"], 1, f"Step k=0 event must record tick=1: {ev}")
         self.assertEqual(len(sim.motes), 1)
-        self.assertEqual(sim.state, "won")
-        # 10*10 + 100 + floor(99.983)*2 + 3*50 = 100 + 100 + 198 + 150 = 548
-        self.assertEqual(sim.score, 548)
+        self.assertEqual(sim.state, "playing")
+        self.assertEqual(sim.player.capacity, 12)
+        # 10 motes deposited * 5 + 100 first-light = 150
+        self.assertEqual(sim.score, 150)
 
     def test_interact_held_does_not_retrigger_without_false_transition(self) -> None:
         from src.game.sim import Mote
@@ -285,12 +289,13 @@ class TestPhase1Simulation(unittest.TestCase):
             lines = [json.loads(line) for line in raw1.splitlines() if line.strip()]
             snaps = [r for r in lines if r["type"] == "snapshot"]
             self.assertEqual([s["tick"] for s in snaps], list(range(0, 361, 30)))
-            self.assertAlmostEqual(snaps[2]["time_left_s"], 300.0 - 60 / 60.0, places=3)
+            # Updated in Phase 3 (Ticket-03): Night 1 duration is 240s
+            self.assertAlmostEqual(snaps[2]["time_left_s"], 240.0 - 60 / 60.0, places=3)
             self.assertEqual(snaps[0]["motes_active"], len(snaps[0]["motes"]))
             self.assertEqual(lines[-1]["type"], "end")
             self.assertEqual(lines[-1]["ticks"], 360)
 
-            # Default --snapshot-every is 10, --ticks 0 emits tick 0 + end, early-stop on win works
+            # Default --snapshot-every is 10, --ticks 0 emits tick 0 + end, dawn win at tick 30
             win_out = tmp_dir / "win.jsonl"
             win_proc = subprocess.run(
                 [
@@ -307,10 +312,11 @@ class TestPhase1Simulation(unittest.TestCase):
             self.assertEqual(win_proc.returncode, 0, win_proc.stderr)
             win_lines = [json.loads(ln) for ln in win_out.read_text(encoding="utf-8").splitlines()]
             win_snaps = [r for r in win_lines if r["type"] == "snapshot"]
-            self.assertEqual([r["tick"] for r in win_snaps], [0, 10, 20, 26])
+            # Updated in Phase 3 (Ticket-03): p1_win_night1.json uses time_left_s=0.5 (30 ticks) for dawn_survived
+            self.assertEqual([r["tick"] for r in win_snaps], [0, 10, 20, 30])
             self.assertEqual(win_snaps[-1]["state"], "won")
             self.assertEqual(win_lines[-1]["state"], "won")
-            self.assertEqual(win_lines[-1]["ticks"], 26)
+            self.assertEqual(win_lines[-1]["ticks"], 30)
 
             zero_records = run_headless(seed=1, night=1, ticks=0)
             self.assertEqual([r["type"] for r in zero_records], ["snapshot", "end"])

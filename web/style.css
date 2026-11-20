@@ -38,6 +38,18 @@ html, body {
 .wind-badge {
   margin-top: 4px; font-size: 12px; font-weight: 700; color: #8fa3b8;
 }
+.muted-small { font-size: 11px; color: var(--muted); }
+.low-fuel-badge {
+  margin-top: 4px; font-size: 12px; font-weight: 700; color: var(--danger);
+  animation: blink 1s infinite;
+}
+body.colorblind {
+  --danger: #ffffff;
+}
+body.colorblind .low-fuel-badge::before,
+body.colorblind #timer.warn::before {
+  content: "⚠ ";
+}
 .charm {
   background: #c8102e; color: #ffe9b0; border: 1px solid var(--gold);
   border-radius: 999px; padding: 1px 7px; font-size: 11px; margin-left: 6px;
@@ -49,9 +61,9 @@ html, body {
   box-shadow: 0 0 10px rgba(255, 179, 71, 0.85);
 }
 .flame.off { background: #2c3354; box-shadow: none; opacity: 0.4; }
-.pips { display: flex; gap: 5px; margin-top: 4px; }
+.pips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; max-width: 220px; }
 .pip {
-  width: 14px; height: 14px; border-radius: 50%;
+  width: 12px; height: 12px; border-radius: 50%;
   border: 1px solid rgba(255, 229, 138, 0.45); background: rgba(255, 229, 138, 0.08);
 }
 .pip.on { background: #ffe58a; box-shadow: 0 0 8px #ffe58a; }
