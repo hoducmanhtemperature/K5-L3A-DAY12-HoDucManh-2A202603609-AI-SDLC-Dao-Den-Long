@@ -89,20 +89,20 @@ body.colorblind #timer.warn::before {
 .rebind-section { border-top: 1px solid rgba(255, 255, 255, 0.12); padding-top: 8px; }
 .rebind-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
 .rebind-list { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-.rebind-row { display: flex; justify-content: space-between; align-items: center; gap: 6px; font-size: 0.85rem; }
-.rebind-error { color: var(--danger); font-size: 0.85rem; margin-bottom: 4px; }
+.rebind-row { display: flex; justify-content: space-between; align-items: center; gap: 6px; font-size: 1rem; }
+.rebind-error { color: var(--danger); font-size: 1rem; margin-bottom: 4px; }
 .leaderboard-panel, .save-score-panel {
   text-align: left; background: rgba(11, 16, 40, 0.78); border-radius: 8px;
   padding: 12px 14px; margin-bottom: 14px; max-height: 220px; overflow-y: auto;
 }
-.lb-table { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 0.9rem; }
+.lb-table { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 1rem; }
 .lb-table th, .lb-table td { padding: 4px 6px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); text-align: left; }
 .save-score-row { display: flex; gap: 8px; margin-top: 6px; }
 .save-score-row input {
   flex: 1; background: #0e1430; color: var(--ink); border: 1px solid #415094;
   border-radius: 6px; padding: 6px 10px; font-size: 1rem; user-select: text;
 }
-.small-btn { padding: 6px 14px; font-size: 0.9rem; }
+.small-btn { padding: 6px 14px; font-size: 1rem; }
 .hidden { display: none !important; }
 .overlay {
   position: fixed; inset: 0; background: rgba(8, 11, 28, 0.84);

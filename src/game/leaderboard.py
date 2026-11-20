@@ -2,15 +2,15 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 import json
 import os
 import pathlib
 import re
 from typing import Any
 
-# 3-12 chars: ASCII [A-Za-z0-9_] plus Vietnamese Latin letters
-NAME_RE = re.compile(r"^[A-Za-z0-9_\u00C0-\u024F\u1E00-\u1EFF]{3,12}$")
+# 3-12 chars: ASCII [A-Za-z0-9_] plus Vietnamese Latin letters (excluding × U+00D7 and ÷ U+00F7)
+NAME_RE = re.compile(r"^[A-Za-z0-9_\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u024F\u1E00-\u1EFF]{3,12}$")
 MAX_ENTRIES = 10
 
 
@@ -27,9 +27,19 @@ def validate_name(name: str) -> str:
     return name
 
 
-def _sort_key(entry: dict[str, Any]) -> tuple[int, str]:
-    # Higher score first; tie-breaker: earlier achieved_at first
-    return (-int(entry.get("score", 0)), str(entry.get("achieved_at", "")))
+def _parse_utc_ts(raw_ts: Any) -> float:
+    try:
+        dt = datetime.fromisoformat(str(raw_ts))
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt.astimezone(timezone.utc).timestamp()
+    except ValueError:
+        return float("inf")
+
+
+def _sort_key(entry: dict[str, Any]) -> tuple[int, float]:
+    # Higher score first; tie-breaker: earlier achieved_at (converted to UTC) first
+    return (-int(entry.get("score", 0)), _parse_utc_ts(entry.get("achieved_at", "")))
 
 
 def load_entries(path: pathlib.Path | None = None) -> list[dict[str, Any]]:
@@ -43,7 +53,10 @@ def load_entries(path: pathlib.Path | None = None) -> list[dict[str, Any]]:
     entries = raw.get("entries", []) if isinstance(raw, dict) else []
     if not isinstance(entries, list):
         return []
-    valid = [e for e in entries if isinstance(e, dict) and "name" in e and "score" in e]
+    valid: list[dict[str, Any]] = []
+    for e in entries:
+        if isinstance(e, dict) and isinstance(e.get("name"), str) and NAME_RE.match(e["name"]) and "score" in e:
+            valid.append(e)
     valid.sort(key=_sort_key)
     return valid[:MAX_ENTRIES]
 

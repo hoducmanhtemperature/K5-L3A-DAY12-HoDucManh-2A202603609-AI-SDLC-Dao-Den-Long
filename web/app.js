@@ -160,7 +160,7 @@
       }
       entries.forEach((e, idx) => {
         const tr = document.createElement("tr");
-        tr.innerHTML = `<td>${idx + 1}</td><td>${e.name}</td><td>${e.score}</td><td>${e.nights_won}/3</td>`;
+        tr.innerHTML = `<td>${idx + 1}</td><td>${e.name.replace(/[<>&]/g, "")}</td><td>${e.score}</td><td>${e.nights_won}/3</td>`;
         lbBody.appendChild(tr);
       });
     } catch (_) {}
@@ -392,7 +392,7 @@
       return;
     }
     if (document.activeElement === lbName) return;
-    if ((e.code === keybinds.pause || e.code === "KeyP") && !e.repeat) {
+    if ((e.code === keybinds.pause) && !e.repeat) {
       if (screenMode === "playing" || screenMode === "paused") {
         pendingPauseToggle = true;
       }
@@ -522,6 +522,7 @@
       }
     } else if (screenMode === "dawn") {
       totalGameScore = 0;
+      nightsWon = 0;
       currentNight = 1;
       startNight(1);
     }
@@ -563,8 +564,8 @@
         cam_yaw_deg: camYawDeg,
         jump: keys.has(keybinds.jump),
         interact: keys.has(keybinds.interact),
-        pulse: keys.has(keybinds.pulse) || keys.has("KeyF"),
-        dash: keys.has(keybinds.dash) || keys.has("ShiftRight"),
+        pulse: keys.has(keybinds.pulse),
+        dash: keys.has(keybinds.dash),
         pause: pendingPauseToggle,
       }));
       pendingPauseToggle = false;
@@ -741,6 +742,7 @@
     elLit.textContent = `${litCount}/${s.lanterns.length}`;
     elLitTarget.textContent = `(cần ${targetLit})`;
     elLowFuel.classList.toggle("hidden", !hasLowFuel);
+    if (hasLowFuel && s.state === "playing" && s.tick % 300 === 1) showSubtitle("⚠ Đèn sắp cạn dầu (fuel < 30)!", 2500);
     elScore.textContent = String(s.score);
 
     const cap = s.player.capacity || 10;
@@ -782,7 +784,7 @@
       lbSaveMsg.textContent = "";
       if (s.state === "won") {
         totalGameScore += s.score;
-        nightsWon = Math.max(nightsWon, currentNight);
+        nightsWon += 1;
         if (currentNight === 3) {
           showModal("dawn", "Bình Minh Lên!", "Hoàn thành cả 3 Đêm", `Đảo Đèn Lồng đã sáng trở lại! Tổng điểm: ${totalGameScore}`, "Chơi lại từ Đêm 1", false, true);
           saveScorePanel.classList.remove("hidden");

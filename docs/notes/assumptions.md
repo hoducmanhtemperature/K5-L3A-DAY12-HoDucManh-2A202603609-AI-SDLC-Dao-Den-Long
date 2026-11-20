@@ -53,3 +53,10 @@ Record every ambiguity in the phase specifications, the chosen concrete values/r
 - **Soak Test RSS Measurement:** `src/soak.py` reads current process RSS (`VmRSS` from `/proc/self/status` on Linux, with `resource.getrusage` fallback on macOS) right after loading Night 1 (`mem_start_mb`) and after resetting + `gc.collect()` following the last night (`mem_end_mb`).
 - **Leaderboard Storage & Validation:** Persisted to `~/.local/share/dao-den-long/leaderboard.json` (overridable via `DDL_LEADERBOARD_PATH` for hermetic tests). Name validation accepts 3–12 characters matching `[A-Za-z0-9_]` plus Vietnamese accented Latin letters (bonus), rejecting whitespace/punctuation/out-of-range lengths.
 - **Phase 1–3 Test Updates for Contract v1.3:** Updated `contract_version` assertion in `tests/test_phase1_sim.py`, `tests/test_phase2_features.py`, and `tests/test_phase3_fuel.py` from `"1.2"` to `"1.3"` (strictly additive: adds `bench_cmd` and `soak_cmd` while preserving all v1.0–v1.2 tuning keys).
+
+### Phase 4 — Independent review findings (qwen4-max-preview) & honest limitations
+- `src/bench.py` is a **sim-only** benchmark (no GPU/window/vsync in this Linux env): `bench.json` now reports `vsync_off: false` and `renderer: "headless-sim-only ..."`. Its FPS values do NOT prove the render thresholds (`avg_fps>=60`, `p1_low>=30`); those must be measured on the grader machine via `web/index.html?bench=1` (browser, writes `window.__BENCH_RESULT__`, `peak_mem_mb: null`).
+- `soak.json`: random inputs frequently walk Mây off the island, so nights end early as `lost`; soak therefore exercises limited simulated time. Non-terminal states are now reported as-is (no relabeling).
+- Rebinding: hardcoded `KeyP`/`KeyF`/`ShiftRight` fallbacks removed; arrow keys remain as secondary movement aliases.
+- Leaderboard tie-break now compares UTC-parsed timestamps; `×`/`÷` excluded from names; names re-validated on load.
+- Known gap: Reduced Motion disables CSS animation/pulse ring; the game has no camera shake/screen flash to disable. Video demo `.mp4` and GitHub Release `v1.0.0` require the user (no `gh`/auth here).

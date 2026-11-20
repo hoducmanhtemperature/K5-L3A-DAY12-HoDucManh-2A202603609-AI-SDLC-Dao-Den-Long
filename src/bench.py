@@ -135,16 +135,24 @@ def compute_bench_metrics(
     p95_idx = min(n - 1, max(0, math.ceil(0.95 * n) - 1))
     frame_ms_p95 = sorted_asc[p95_idx]
 
+    contract_version = "1.3"
+    contract_path = ROOT / "game.contract.json"
+    if contract_path.exists():
+        try:
+            contract_version = str(json.loads(contract_path.read_text(encoding="utf-8")).get("contract_version", "1.3"))
+        except (OSError, json.JSONDecodeError):
+            pass
+
     return {
-        "contract_version": "1.3",
+        "contract_version": contract_version,
         "avg_fps": round(avg_fps, 2),
         "p1_low_fps": round(p1_low_fps, 2),
         "frame_ms_p95": round(frame_ms_p95, 3),
         "frames": n,
         "load_ms": round(load_ms, 2),
         "peak_mem_mb": peak_rss_mb(),
-        "vsync_off": True,
-        "renderer": f"Python {platform.python_version()} 60Hz-Sim + Three.js r128 WebGL (CLI headless-pipeline bench)",
+        "vsync_off": False,
+        "renderer": f"headless-sim-only (Python {platform.python_version()}; no GPU/browser in CLI; interactive WebGL 1280x720 at web/index.html?bench=1)",
         "os": f"{platform.system()} {platform.release()} ({platform.machine()})",
     }
 

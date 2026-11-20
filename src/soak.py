@@ -76,7 +76,7 @@ def run_soak(seed: int, nights: int) -> dict[str, object]:
                         "interact": in_rng.random() < 0.10,
                     }
                 )
-            results.append(sim.state if sim.state in ("won", "lost") else "lost")
+            results.append(sim.state)
             del sim
             gc.collect()
         except Exception:

@@ -84,20 +84,24 @@ class TestPhase4Release(unittest.TestCase):
         # Name validation: 3-12 chars [A-Za-z0-9_] (+ Vietnamese bonus)
         self.assertEqual(validate_name("May_01"), "May_01")
         self.assertEqual(validate_name("ĐènLồng"), "ĐènLồng")
-        for bad in ("ab", "too_long_name_13", "bad name", "bad!@#", ""):
+        for bad in ("a×bcd", "ab", "too_long_name_13", "bad name", "bad!@#", ""):
             with self.assertRaises(ValueError):
                 validate_name(bad)
 
         with tempfile.TemporaryDirectory() as tmp:
             lb_file = pathlib.Path(tmp) / "lb.json"
             # Add 12 entries including a score tie to test tie-breaker (earlier achieved_at first) & top-10 cap
+            # Mixed-offset tie: 05:00Z is later than 04:30Z although string "12:00+07" > "11:00+00"
+            add_entry("UtcLater", 400, 1, 12, achieved_at="2026-11-20T11:00:00+00:00", path=lb_file)
+            add_entry("UtcEarlier", 400, 1, 13, achieved_at="2026-11-20T12:00:00+07:00", path=lb_file)
             add_entry("LaterTie", 500, 2, 10, achieved_at="2026-11-20T12:05:00+07:00", path=lb_file)
             add_entry("EarlierTie", 500, 2, 11, achieved_at="2026-11-20T12:00:00+07:00", path=lb_file)
             for i in range(10):
                 add_entry(f"Player_{i}", 100 + i * 50, 1, i, achieved_at=f"2026-11-20T11:0{i}:00+07:00", path=lb_file)
 
+            all_names = [e["name"] for e in load_entries(lb_file)]
+            self.assertEqual(len(all_names), 10)
             entries = load_entries(lb_file)
-            self.assertEqual(len(entries), 10)
             self.assertEqual(entries[0]["name"], "Player_9")  # 550
             self.assertEqual(entries[1]["name"], "Player_8")  # 500 at 11:08 (earliest tie)
             self.assertEqual(entries[2]["name"], "EarlierTie")  # 500 at 12:00
