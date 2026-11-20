@@ -1,0 +1,28 @@
+# Secrets and local environment
+ENV
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.pfx
+*.p12
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+
+# Node / Web build
+node_modules/
+dist/
+build/
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+*.swp
+*~

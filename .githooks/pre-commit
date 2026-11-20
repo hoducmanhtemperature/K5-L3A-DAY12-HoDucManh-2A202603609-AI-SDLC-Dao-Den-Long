@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Single source of truth: scan staged secrets and block commits if verification is red.
+python3 tools/verify.py --check-staged --quiet --ci

@@ -1,0 +1,29 @@
+name: Verify
+
+on:
+  push:
+    branches: ["**"]
+    tags: ["phase-*", "v*"]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Run verification gate for highest present phase
+        run: |
+          phase=0
+          for n in 4 3 2 1; do
+            if [ -f "docs/specs/phase-${n}.md" ]; then
+              phase=$n
+              break
+            fi
+          done
+          python3 tools/verify.py --phase "$phase" --ci --require-clean

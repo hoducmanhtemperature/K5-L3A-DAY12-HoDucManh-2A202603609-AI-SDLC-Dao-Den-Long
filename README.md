@@ -101,3 +101,14 @@ Không commit API key, token hay `.env`. Gửi link repo theo hướng dẫn c�
 - Dùng AI thoải mái; không sao chép repo của người khác.
 - Bằng chứng phải thật: test luôn đạt hay output sửa tay là vi phạm.
 - Nhân vật, bối cảnh là bản gốc của lab; asset bên ngoài chỉ dùng loại CC0/CC-BY/MIT hoặc tự tạo, ghi nguồn trong `CREDITS.md`.
+
+---
+
+## Checkpoint 0 — Quick Verification (Python ≥ 3.10)
+
+```bash
+python3 tools/hello_headless.py
+python3 tools/verify.py --ci --require-clean
+# Optional on local clones to enable pre-commit secret/test gate (CI always enforces):
+git config core.hooksPath .githooks
+```

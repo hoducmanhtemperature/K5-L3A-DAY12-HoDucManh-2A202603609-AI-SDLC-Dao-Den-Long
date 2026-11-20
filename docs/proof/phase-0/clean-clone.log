@@ -1,0 +1,28 @@
+127.0.0.1 - - [20/Nov/2026 15:57:24] "GET /hello_3d.html HTTP/1.1" 200 -
+{"project": "Dao Den Long", "checkpoint": "phase-0", "mode": "headless", "python": "3.13.14", "http_static_status": 200, "status": "ready"}
+=== Verification Report (phase=0) ===
+Timestamp (UTC): 2026-11-20T08:57:25.342531+00:00
+Git HEAD: 33114b2
+Git working tree: clean
+Git core.hooksPath: unset
+Python: 3.13.14
+Phase gate: N/A (CP0)
+Secret scan: PASS
+Clean tree check: PASS
+
+--- Unit Tests (python3 -m unittest discover -s tests -v) ---
+test_env_ignored_and_hook_executable_in_index (test_harness_smoke.TestHarnessSmoke.test_env_ignored_and_hook_executable_in_index) ... ok
+test_hello_headless_and_local_http_serve (test_harness_smoke.TestHarnessSmoke.test_hello_headless_and_local_http_serve) ... ok
+test_hook_blocks_forbidden_and_staged_secret_and_allows_clean_binary (test_harness_smoke.TestHarnessSmoke.test_hook_blocks_forbidden_and_staged_secret_and_allows_clean_binary) ... ok
+test_phase_validation_hermetic_and_strict_review_guards (test_harness_smoke.TestHarnessSmoke.test_phase_validation_hermetic_and_strict_review_guards) ... ok
+test_qwen_review_get_git_diff_fail_closed_on_empty_invalid_and_oversized (test_harness_smoke.TestHarnessSmoke.test_qwen_review_get_git_diff_fail_closed_on_empty_invalid_and_oversized) ... ok
+test_secret_scanner_boundaries_and_filenames (test_harness_smoke.TestHarnessSmoke.test_secret_scanner_boundaries_and_filenames) ... ok
+test_verify_blocks_non_ascii_secret_oversized_binary_dirty_red_and_skipped (test_harness_smoke.TestHarnessSmoke.test_verify_blocks_non_ascii_secret_oversized_binary_dirty_red_and_skipped) ... verify.py: PASS (phase=0, commit=no-commit, tree=dirty (7 uncommitted path(s)))
+ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 4.605s
+
+OK
+
+OVERALL: PASS
