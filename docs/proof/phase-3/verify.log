@@ -1,7 +1,7 @@
 === Verification Report (phase=3) ===
-Timestamp (UTC): 2026-11-20T09:59:02.303871+00:00
-Git HEAD: e2918f5
-Git working tree: dirty (19 uncommitted path(s))
+Timestamp (UTC): 2026-11-20T10:00:29.247106+00:00
+Git HEAD: e2cb991
+Git working tree: dirty (1 uncommitted path(s))
 Git core.hooksPath: .githooks
 Python: 3.13.14
 Phase spec check: SPEC_PRESENT
@@ -46,7 +46,7 @@ test_refuel_exact_ceil_motes_and_full_lantern_skipped (test_phase3_fuel.TestPhas
 test_shade_drain_low_fuel_safe_zone_loss_pulse_bonus_and_repel_on_refuel (test_phase3_fuel.TestPhase3FuelAndDawnSurvival.test_shade_drain_low_fuel_safe_zone_loss_pulse_bonus_and_repel_on_refuel) ... ok
 
 ----------------------------------------------------------------------
-Ran 35 tests in 8.041s
+Ran 35 tests in 8.271s
 
 OK
 
