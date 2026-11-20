@@ -210,7 +210,6 @@ class Mote:
     pos: list[float]
     kind: str = "random"
     ttl_ticks: int | None = None
-    ready_tick: int = 0
 
 
 @dataclass
@@ -322,7 +321,7 @@ class Simulation:
                     lan.lit = bool(patch["lit"])
                     if lan.lit and "deposited" not in patch:
                         lan.deposited = int(self.tuning["lantern_cost"])
-                if lan.deposited >= int(self.tuning["lantern_cost"]):
+                elif lan.deposited >= int(self.tuning["lantern_cost"]):
                     lan.lit = True
 
         if "motes" in sc:
@@ -568,12 +567,7 @@ class Simulation:
         radius = float(self.tuning["pickup_radius"])
         remaining: list[Mote] = []
         for m in self.motes:
-            if (
-                self.player.carried < cap
-                and m.ready_tick <= self.sim_tick
-                and _dist_xz(self.player.pos, m.pos) <= radius
-                and abs(self.player.pos[1] - m.pos[1]) <= 1.5
-            ):
+            if self.player.carried < cap and _dist_xz(self.player.pos, m.pos) <= radius:
                 self.player.carried += 1
                 self._emit(events, "mote_picked", {"carried": self.player.carried})
             else:
@@ -713,7 +707,7 @@ class Simulation:
         for sh in sorted(self.shades, key=lambda s: s.id):
             if sh.state not in ("wander", "chase") or sh.safe_repel_ticks > 0:
                 continue
-            if _dist_xz(sh.pos, self.player.pos) <= hr and abs(self.player.pos[1]) <= 1.5:
+            if _dist_xz(sh.pos, self.player.pos) <= hr:
                 self.player.flames = max(0, self.player.flames - 1)
                 dropped = int(math.floor(self.player.carried * drop_ratio))
                 self.player.carried -= dropped
@@ -734,7 +728,6 @@ class Simulation:
                             pos=[mx, 0.0, mz],
                             kind="dropped",
                             ttl_ticks=DROPPED_MOTE_TTL_TICKS,
-                            ready_tick=self.sim_tick + 1,
                         )
                     )
 
@@ -770,7 +763,6 @@ class Simulation:
                             id=self._next_mote_id(),
                             pos=list(chosen),
                             kind="random",
-                            ready_tick=self.sim_tick + 1,
                         )
                     )
 
@@ -851,7 +843,7 @@ def run_headless(
         patch = frames.get(step_idx)
         events = sim.step(patch)
         records.extend(events)
-        if sim.tick % snapshot_every == 0:
+        if sim.tick % snapshot_every == 0 or sim.state != "playing":
             records.append(sim.snapshot())
 
     records.append(sim.end_record())

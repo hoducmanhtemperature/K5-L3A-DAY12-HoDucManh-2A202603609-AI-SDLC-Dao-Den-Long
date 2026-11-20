@@ -55,7 +55,7 @@ Command:
 - `{"frames": [{"tick": int, "move": [x, z], "cam_yaw_deg": float, "jump": bool, "interact": bool, "pulse": bool}]}`
 - Defaults before frame 0: `move [0, 0]`, `cam_yaw_deg 0`, all buttons `false`.
 - Partial frames preserve omitted fields; `tick` must strictly increase.
-- `move` components in `[-1, 1]`; rotated by `θ = radians(cam_yaw_deg)`: `x' = x·cosθ + z·sinθ`, `z' = -x·sinθ + z·sinθ`; normalized to length 1 if `> 1`.
+- `move` components in `[-1, 1]`; rotated by `θ = radians(cam_yaw_deg)`: `x' = x·cosθ + z·sinθ`, `z' = -x·sinθ + z·cosθ`; normalized to length 1 if `> 1`.
 - Buttons trigger on `false -> true` edge.
 
 ### D. Scenario Schema (`--scenario`)

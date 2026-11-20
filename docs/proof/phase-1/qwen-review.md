@@ -1,56 +1,41 @@
 # Qwen4-Max-Preview Independent Review (phase=1)
-- Timestamp (UTC): 2026-11-20T09:19:06.826279+00:00
+- Timestamp (UTC): 2026-11-20T09:26:25.485622+00:00
 - Audited diff base: `f0b40c3`
 - Model: `qwen4-max-preview`
-- Token usage: `{"prompt_tokens": 37245, "total_tokens": 45435, "completion_tokens": 8190, "prompt_tokens_details": {"cached_tokens": 0, "text_tokens": 37245}, "completion_tokens_details": {"reasoning_tokens": 6338}}`
+- Token usage: `{"prompt_tokens": 40202, "total_tokens": 46603, "completion_tokens": 6401, "prompt_tokens_details": {"cached_tokens": 1280, "text_tokens": 40202}, "completion_tokens_details": {"reasoning_tokens": 4982}}`
 
-# Independent Review — Phase 1 (`f0b40c3` → `4ca5dd5`)
+## Review — Phase 1 (`f0b40c3` → `fe15073`)
 
-Overall the architecture is right: one pure `Simulation` shared by CLI and WS server, no rendering imports in `src/game/`, seeded `random.Random`, no wall-clock/hash-order dependence in the sim. But the *verification* around it is materially weaker than the log claims, and several contract clauses are simply untested.
+Architecture is sound (single pure `Simulation` shared by CLI + WS server; AST import-boundary test is a real guard). But several contract deviations were rationalized into `assumptions.md` rather than resolved, and the review gate was widened in the same commit that adds the largest unreviewed artifact.
 
-## 1. Requirement / Contract mismatches & invented features
+### 1. Contract mismatches (spec text is explicit)
 
-- **`scenario.time_left_s` is an invented schema field** (`sim.py parse_scenario_dict`, `_apply_scenario`). Spec §D lists exactly `player / random_motes / random_shades / lanterns / motes / shades`. Worse, it breaks the §B invariant `time_left_s = night1_duration_s - steps_executed/60` — the shipped fixture `p1_win_night1.json` sets `120.0`, so the "proof" scenario runs under a *different* time model than the contract. Not documented in `assumptions.md`.
-- **Vertical gates on XZ radii.** §B: "All `tuning` radii measured on XZ plane (`distance_xz <= r`)". `_step_mote_pickup` adds `abs(player.y - mote.y) <= 1.5`; `_step_shade_touch` adds `abs(player.y) <= 1.5`. Latent in normal play (jump apex = 7²/40 = 1.225 m < 1.5), but reachable via `scenario.player.pos[1]` — a spec-conformant reference would pick up / hit, this one won't. Undocumented.
-- **`Mote.ready_tick = sim_tick + 1`** for spawned motes is another invented, undocumented rule that shifts pickup by one tick.
-- Spec §C has a typo (`z' = -x·sinθ + z·sinθ`); the sim uses `cos`. Correct choice, but this is exactly the kind of ambiguity `assumptions.md` is supposed to record — it doesn't.
-- §E `end.state` is `"won|lost"`, yet a `--ticks`-bounded run emits `"playing"` (the 360-tick test does this). Defensible, but unrecorded.
-- No terminal snapshot is emitted when the run ends on a tick not divisible by `--snapshot-every`; the last snapshot can be 9 ticks stale at `won`/`lost`.
+- **Y-gating violates "All `tuning` radii measured on XZ plane (`distance_xz <= r`)"** (`sim.py:_step_mote_pickup`, `_step_shade_touch`). Spec §B leaves no room for `abs(dy) <= 1.5`. It is *not* harmless dead code: jump apex is `7²/(2·20) = 1.225 m`, so the guard never fires from normal jumps — it only fires for **scenario-supplied `player.pos` with `y > 1.5`** (a legal §D input), where a contract-conformant reference picks the mote and this sim does not. Worse, it's asymmetric: pickup uses `player.y - mote.y`, shade touch uses `abs(player.y)` and ignores `shade.pos[1]` even though spec says shade pos = center. Either implement pure XZ or get the deviation approved — recording it in your own assumptions file is not approval.
+- **Scenario `lit` is silently overridden**: `_apply_scenario` ends with `if lan.deposited >= lantern_cost: lan.lit = True`. A scenario `{"id":"L1","lit":false,"deposited":10}` (both fields explicitly supported by §D) comes out lit. Explicit scenario fields must win. Untested.
+- **No terminal snapshot on early stop.** Win at tick 26 with default cadence 10 → snapshots `[0,10,20]`, all `"playing"`; the won state appears only in `end`. §E defines `state:"playing|won|lost"` for snapshots, so a grader reading the last snapshot sees the wrong result. `test_headless_cli_determinism...` *codifies* this (`assertEqual(win_snaps,[0,10,20])`) instead of questioning it. Emit a final snapshot at the terminal tick.
+- **`end.state` may be `"playing"`** — §E says `"won|lost"`. Documented, but still a literal schema violation; at minimum flag it as an open question to the board, not a settled assumption.
+- **Spec §C rotation typo (`z' = -x·sinθ + z·sinθ`) was silently corrected to `cosθ`.** Correct engineering call, but it is *not* in the "Contract nuances recorded" list, and the test asserts only your interpretation. Document it.
+- `ready_tick = sim_tick + 1` is dead code (spawns/drops both happen after the pickup phase in the same tick) — an invented rule with no effect; remove it rather than list it as a contract nuance.
 
-## 2. Coupling / determinism
+### 2. Determinism / coupling
+No rendering or wall-clock coupling in `sim.py`; RNG is a single seeded `Random`, all iteration is over lists, JSON key order is insertion-stable. Cross-process byte-identity is genuinely exercised. This part is fine.
 
-- Sim boundary is clean; `render_state()` is additive and never in JSONL. Good.
-- **The WS server bypasses contract validation entirely**: `latest_input` is fed raw into `sim.step()` without `parse_inputs_dict`. `int(msg.get("seed", ...))` on a non-numeric client value raises inside `reader()`, killing the thread *without* `stop_flag.set()` (the trailing `set()` is skipped on exception) → main loop spins on a dead socket. `sim.__init__(...)` re-init on a live object is a hack, not a reset API.
-- `read_ws_frame` has no payload-length cap; a declared 2^64 length drives an unbounded `recv_exact` allocation. No `Origin` check on `/ws` (any page in the user's browser can drive the local sim). Localhost-only, so low severity — but unbounded allocation + no origin check should be noted, not ignored.
+### 3. Weak / missing tests
+- `test_headless_full_night_performance_budget` asserts only `type=="end"` and `<10 s` — near-tautological; it never asserts 18000 steps ran or the resulting state.
+- **Safe-radius test is rigged**: player placed exactly at L1 center, so shade at 6 m can never be within 1 m. The real hole is untested: player at 5.9 m from a lit lantern, shade clamped to 6.0 m on the same bearing → `distance_xz ≈ 0.1` → **player is hit while standing inside the "safe" zone**. Either fix the semantics or test/justify it.
+- No test for **loss by `no_flames`** (fall test stops at 1 flame), no test that `shade_spawned` is ever emitted or that the spawn schedule/cap holds, no test for mote auto-spawn/`MOTE_MAX_ACTIVE`, no test rejecting out-of-range `move`, no test for `--snapshot-every 0`, no test for scenario `time_left_s` override arithmetic, no test of the WS `restart` path (the "replay" deliverable).
+- Pulse test mutates `sim.shades` / `sim.player.carried` mid-run — white-box patching hides the very cooldown/cost interaction it claims to verify.
 
-## 3. Weak / missing tests (the core problem)
+### 4. Verification evidence / supply chain
+- `tools/qwen_review.py` now excludes `:!web/vendor/`. The single largest new artifact (vendored minified Three.js) is removed from independent review in the same commit that introduces it. Self-serving scope reduction.
+- `CREDITS.md` asserts a SHA-256 for `three.min.js`; **nothing verifies it** (no test, no verify step). Add a hash assertion.
+- **No Phase-1 clean-clone proof.** README claims offline-capable vendored assets; the only clean-clone evidence in the matrix is CP0. If `web/vendor/` is ignored/untracked, a fresh clone 404s and the local test still passes. Prove it.
+- Minor: WS upgrade accepts any `Origin` (cross-origin WS to `127.0.0.1` is not CORS-blocked) and ignores fragmentation/`Sec-WebSocket-Version`. Low risk for a local game, but note it.
 
-Mandatory §B/§C/§E clauses with **zero assertions anywhere**:
-- **Malformed `--scenario` → exit 2.** Only malformed *inputs* is tested. Spec requires both.
-- **Event `tick = k+1`.** Tests check `e["name"]` only, never `e["tick"]`. Off-by-one in event ticks would pass everything.
-- **Snapshot cadence / default `--snapshot-every 10`.** Never asserted (the CLI test passes `30` explicitly and only checks line 0 and line -1).
-- **`time_left_s` formula**, coordinate 3-dp rounding, `motes_active`, early-stop-on-win via the CLI (`end.ticks < --ticks`), `--ticks 0`, `random_motes:false` actually suppressing spawns over a long run.
+### Required before sign-off
+1. Remove Y-gating (or obtain explicit spec amendment) and make scenario `lit` authoritative.
+2. Emit a terminal snapshot; resolve `end.state` schema with the board.
+3. Add tests: `no_flames` loss, `shade_spawned`, safe-radius boundary, scenario `lit:false` + `deposited>=cost`, replay/restart.
+4. Restore `web/vendor/` to the review diff (or hash-verify it in `verify.py`) and add a Phase-1 clean-clone log.
 
-Tests that are near-tautological or conflated:
-- `test_shade_hit_..._safe_radius`: asserts `dist >= 5.999` immediately after `_enforce_safe_radius` hard-teleports the shade to exactly `sr`. It tests the clamp against itself.
-- `test_pulse_...cooldown_and_cost`: after 15 ticks, `carried == 1 < 3` **and** cooldown active — the negative assertion can't distinguish them. Pulse is never re-fired after cooldown expiry, and `pulse_radius` boundary (5.0 vs 5.01) is untested.
-- `test_headless_full_night_performance_budget`: 18,000 ticks, asserts only `type == "end"` and wall-clock < 10 s. A sim that does nothing passes. Also a flaky timing assertion in CI.
-- `test_contract_json_matches_phase1_tuning`: equality against the same-authored `PHASE1_TUNING`. If a required key is missing from *both*, it passes. Assert the spec's key set explicitly.
-- `test_sim_module_is_decoupled...`: blocklist misses `subprocess`, `importlib`, `json`, `pathlib`, `numpy`; `__import__("socket")` is invisible to it.
-- **Dead/garbage code** in `test_interact_held_...`: `sim.motes.append(... type(sim.lanterns[0])("M9", [...]))` constructs a **`Lantern`** into the motes list, then the very next line overwrites `sim.motes`. Remove it; it's evidence of code the agent didn't re-read.
-- No golden/expected JSONL fixture is committed. Two identical runs prove determinism, not correctness.
-
-## 4. Harness / evidence
-
-- **`verify.py check_phase_requirements` fails open.** The new determinism gate is wrapped in `if root == ROOT:` *and* `if sc_path.is_file() and in_path.is_file():`. Delete/rename either fixture → gate silently returns `True, []`. It also hardcodes phase-1 fixtures for **any** phase > 1, and never validates `contract_version` or the tuning key set. Because of `root == ROOT`, the hermetic smoke test never executes the new branch at all — the added gate has **no test coverage**. This is precisely the "always pass" pattern.
-- `tools/qwen_review.py` now excludes `web/vendor/` on top of `docs/proof/`. A ~600 KB minified third-party blob is therefore unreviewed, with **no LICENSE text and no integrity checksum** committed. CREDITS asserts MIT r128; nothing in-repo substantiates it. Add `web/vendor/LICENSE.three.txt` + a SHA-256 pin.
-- Secret scan: no keys/ENV in the diff. `docs/proof/phase-1/verify.log` is referenced by the matrix but excluded from the diff by design — accepted on the strength of the pasted log only.
-
-## Required before re-review
-1. Make the phase gate fail closed (missing fixtures = failure), cover it in a hermetic test, and key fixtures to the actual phase.
-2. Add tests for: malformed scenario → 2, event `tick == k+1`, snapshot cadence + default 10, `time_left_s` formula, CLI early-stop on win, pulse re-fire after cooldown with sufficient motes, radius boundaries (`<=` vs `<`).
-3. Remove the invented `scenario.time_left_s` (or document it and stop using it in the proof fixture); document or drop the Y-gates and `ready_tick`.
-4. Delete the dead `Lantern`-into-motes line; route WS input through `parse_inputs_dict` and fix the reader-thread exception path.
-5. Vendor license + checksum for `three.min.js`.
-
-VERDICT: BLOCKER - verification gate fails open/untested and mandatory contract clauses (scenario exit 2, event tick=k+1, snapshot cadence, time_left formula) are unasserted; invented `scenario.time_left_s` breaks the §B time invariant in the shipped proof fixture.
+VERDICT: BLOCKER - Contract deviations (Y-gated pickup/hit vs explicit XZ-only rule, scenario `lit` overridden, no terminal snapshot) plus vendored `web/vendor/` excluded from review with no hash check or Phase-1 clean-clone proof.

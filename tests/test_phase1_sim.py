@@ -301,10 +301,11 @@ class TestPhase1Simulation(unittest.TestCase):
             )
             self.assertEqual(win_proc.returncode, 0, win_proc.stderr)
             win_lines = [json.loads(ln) for ln in win_out.read_text(encoding="utf-8").splitlines()]
-            win_snaps = [r["tick"] for r in win_lines if r["type"] == "snapshot"]
-            self.assertEqual(win_snaps, [0, 10, 20])
+            win_snaps = [r for r in win_lines if r["type"] == "snapshot"]
+            self.assertEqual([r["tick"] for r in win_snaps], [0, 10, 20, 26])
+            self.assertEqual(win_snaps[-1]["state"], "won")
             self.assertEqual(win_lines[-1]["state"], "won")
-            self.assertLess(win_lines[-1]["ticks"], 200)
+            self.assertEqual(win_lines[-1]["ticks"], 26)
 
             zero_records = run_headless(seed=1, night=1, ticks=0)
             self.assertEqual([r["type"] for r in zero_records], ["snapshot", "end"])
@@ -340,7 +341,41 @@ class TestPhase1Simulation(unittest.TestCase):
         records = run_headless(seed=123, night=1, ticks=18000, snapshot_every=60)
         elapsed = time.monotonic() - t0
         self.assertEqual(records[-1]["type"], "end")
+        self.assertIn(records[-1]["state"], ("lost", "won"))
+        self.assertTrue(any(r.get("name") == "shade_spawned" for r in records))
         self.assertLess(elapsed, 10.0, f"Full 18,000-tick night took too long: {elapsed:.2f}s")
+
+    def test_vendor_threejs_sha256_and_contract_edge_cases(self) -> None:
+        import hashlib
+
+        digest = hashlib.sha256((ROOT / "web" / "vendor" / "three.min.js").read_bytes()).hexdigest()
+        self.assertEqual(digest, "9274bbcec8d96168626c732b5d31c775aa8cfb7eaa0599bec0c175908a2c1ce2")
+
+        # Explicit scenario lit:false takes precedence over deposited>=cost
+        sim_lit = Simulation(
+            seed=1,
+            night=1,
+            scenario={"random_motes": False, "random_shades": False, "lanterns": [{"id": "L1", "lit": False, "deposited": 10}]},
+        )
+        self.assertFalse(sim_lit.lanterns[0].lit)
+
+        # no_flames loss when falling with 1 flame left
+        sim_loss = Simulation(
+            seed=1,
+            night=1,
+            scenario={"player": {"pos": [41.0, -9.9, 0.0], "carried": 2, "flames": 1}, "random_motes": False, "random_shades": False},
+        )
+        game_overs = []
+        for _ in range(10):
+            game_overs.extend(e for e in sim_loss.step() if e["name"] == "game_over")
+        self.assertEqual(sim_loss.state, "lost")
+        self.assertEqual(game_overs[-1]["data"], {"result": "lost", "reason": "no_flames"})
+
+        # Out-of-range move and snapshot_every=0 raise ContractInputError
+        with self.assertRaises(ContractInputError):
+            run_headless(seed=1, night=1, ticks=5, inputs_data={"frames": [{"tick": 0, "move": [1.5, 0.0]}]})
+        with self.assertRaises(ContractInputError):
+            run_headless(seed=1, night=1, ticks=5, snapshot_every=0)
 
     def test_3d_http_and_websocket_server_drives_live_simulation(self) -> None:
         srv = start_server("127.0.0.1", 0)

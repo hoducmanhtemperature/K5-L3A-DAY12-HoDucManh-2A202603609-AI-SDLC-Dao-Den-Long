@@ -1,12 +1,11 @@
 === Verification Report (phase=1) ===
-Timestamp (UTC): 2026-11-20T09:22:52.250659+00:00
-Git HEAD: fe15073
-Git working tree: clean
+Timestamp (UTC): 2026-11-20T09:28:41.420221+00:00
+Git HEAD: db8a465
+Git working tree: dirty (7 uncommitted path(s))
 Git core.hooksPath: .githooks
 Python: 3.13.14
 Phase spec check: SPEC_PRESENT
 Secret scan: PASS
-Clean tree check: PASS
 
 --- Unit Tests (python3 -m unittest discover -s tests -v) ---
 test_env_ignored_and_hook_executable_in_index (test_harness_smoke.TestHarnessSmoke.test_env_ignored_and_hook_executable_in_index) ... ok
@@ -28,9 +27,10 @@ test_movement_cam_yaw_and_diagonal_normalization (test_phase1_sim.TestPhase1Simu
 test_pulse_stuns_pushes_and_respects_cooldown_and_cost (test_phase1_sim.TestPhase1Simulation.test_pulse_stuns_pushes_and_respects_cooldown_and_cost) ... ok
 test_shade_hit_drops_motes_grants_invuln_and_safe_radius_blocks_shades (test_phase1_sim.TestPhase1Simulation.test_shade_hit_drops_motes_grants_invuln_and_safe_radius_blocks_shades) ... ok
 test_sim_module_is_decoupled_from_io_and_rendering (test_phase1_sim.TestPhase1Simulation.test_sim_module_is_decoupled_from_io_and_rendering) ... ok
+test_vendor_threejs_sha256_and_contract_edge_cases (test_phase1_sim.TestPhase1Simulation.test_vendor_threejs_sha256_and_contract_edge_cases) ... ok
 
 ----------------------------------------------------------------------
-Ran 18 tests in 3.657s
+Ran 19 tests in 3.661s
 
 OK
 
